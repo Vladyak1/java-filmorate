@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,15 +24,13 @@ public class FilmController {
     @GetMapping
     public Collection<Film> getAllFilms() {
         log.info("Количество добавленных фильмов {}", films.size());
-        return films.values();
+        return new ArrayList<>(films.values());
     }
 
     @PostMapping
     public Film addFilm(@Valid @RequestBody Film newFilm) {
         validateFilm(newFilm);
-        log.debug("Фильм на добавление {} прошёл валидацию", newFilm);
         newFilm.setId(getNextFilmId());
-        log.debug("Новому фильму {} присвоен Id = {}", newFilm, newFilm.getId());
         films.put(newFilm.getId(), newFilm);
         log.info("Фильм добавлен: {}", newFilm);
         return newFilm;
@@ -40,18 +39,12 @@ public class FilmController {
     @PutMapping
     public Film updateFilm(@Valid @RequestBody Film updatedFilm) {
         validateFilm(updatedFilm);
-        log.debug("Фильм на обновление {} прошёл валидацию", updatedFilm);
         if (films.containsKey(updatedFilm.getId())) {
-            log.debug("Id фильма {} на обновление найден", updatedFilm);
             Film oldFilm = films.get(updatedFilm.getId());
             oldFilm.setDescription(updatedFilm.getDescription());
-            log.debug("Фильму {} обновлено описание", updatedFilm);
             oldFilm.setDuration(updatedFilm.getDuration());
-            log.debug("Фильму {} обновлена длительность", updatedFilm);
             oldFilm.setReleaseDate(updatedFilm.getReleaseDate());
-            log.debug("Фильму {} обновлена дата выхода", updatedFilm);
             oldFilm.setName(updatedFilm.getName());
-            log.debug("Фильму {} обновлено имя", updatedFilm);
             log.info("Фильм обновлен: {}", updatedFilm);
             return oldFilm;
         }
