@@ -7,6 +7,8 @@ import jakarta.validation.constraints.Past;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 public class User {
@@ -24,4 +26,6 @@ public class User {
     @NotNull(message = "Дата рождения не должна быть пустой")
     @Past(message = "Указанная дата для поля дня рождения ещё не наступила")
     private LocalDate birthday;
+
+    private Set<Long> friends = new HashSet<>();
 }
