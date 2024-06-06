@@ -32,4 +32,25 @@ public class Film {
     private long duration;
 
     private Set<Long> likes = new HashSet<>();
+
+    private Genre genre;
+
+    private MPA mpa;
+
+    private enum Genre {
+        COMEDY,
+        DRAMA,
+        CARTOON,
+        Thriller,
+        DOCUMENTARY,
+        ACTION
+    }
+
+    public enum MPA {
+        G, // у фильма нет возрастных ограничений,
+        PG, // детям рекомендуется смотреть фильм с родителями,
+        PG_13, // детям до 13 лет просмотр не желателен,
+        R, // лицам до 17 лет просматривать фильм можно только в присутствии взрослого,
+        NC_17, // лицам до 18 лет просмотр запрещён.
+    }
 }
