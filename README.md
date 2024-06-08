@@ -9,4 +9,4 @@ Template repository for Filmorate project.
 
 SELECT * \
 FROM Film \
-WHERE EXTRACT(YEAR FROM releaseDate) = 2024;\
+WHERE EXTRACT(YEAR FROM releaseDate) = 2024;
