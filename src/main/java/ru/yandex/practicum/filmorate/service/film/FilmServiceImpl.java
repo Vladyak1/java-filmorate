@@ -9,8 +9,6 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.service.genre.GenreService;
 import ru.yandex.practicum.filmorate.service.user.UserService;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
@@ -22,11 +20,9 @@ import java.util.List;
 public class FilmServiceImpl implements FilmService {
     private final FilmStorage filmDbStorage;
     private final UserService userService;
-    private final GenreService genreService;
     private static final String FILM_DOES_NOT_EXIST = "Такого фильма не существует";
     private static final String USER_DOES_NOT_EXIST = "Пользователь не найден";
     private static final String MPA_DOES_NOT_EXIST = "Рейтинг MPA не найден";
-    private static final String GENRE_DOES_NOT_EXIST = "Жанр не найден";
 
     @Override
     public Film addFilm(Film film) {
@@ -47,16 +43,6 @@ public class FilmServiceImpl implements FilmService {
             log.warn(MPA_DOES_NOT_EXIST);
             throw new IllegalArgumentException(MPA_DOES_NOT_EXIST);
         }
-
-        for (Genre genre : result.getGenres()) {
-            try {
-                genreService.getGenre(genre.getId());
-            } catch (NotFoundException e) {
-                log.warn(GENRE_DOES_NOT_EXIST);
-                throw new IllegalArgumentException(GENRE_DOES_NOT_EXIST);
-            }
-        }
-
         return result;
     }
 

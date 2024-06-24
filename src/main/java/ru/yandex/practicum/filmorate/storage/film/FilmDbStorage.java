@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -11,15 +12,19 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.service.genre.GenreService;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 @AllArgsConstructor
 public class FilmDbStorage implements FilmStorage {
     private JdbcTemplate jdbcTemplate;
+    private final GenreService genreService;
 
     @Override
     public Film addFilm(Film film) {
@@ -42,6 +47,22 @@ public class FilmDbStorage implements FilmStorage {
 
         final String sql1 = "insert into film_genres (film_id, genre_id) values (?, ?)";
         final List<Genre> genreList = new ArrayList<>(new HashSet<>(film.getGenres()));
+        Set<Integer> genresIds = genreService.getAllGenres()
+                .stream()
+                .map(Genre::getId)
+                .collect(Collectors.toSet());
+        Set<Integer> filmGenresIds = film.getGenres()
+                .stream()
+                .map(Genre::getId)
+                .collect(Collectors.toSet());
+        Set<Integer> incorrectGenreIds =  filmGenresIds
+                .stream()
+                .filter(genreId -> !genresIds.contains(genreId))
+                .collect(Collectors.toSet());
+        if (!incorrectGenreIds.isEmpty()) {
+            log.warn("Жанры по следующим id не найдены: {}", incorrectGenreIds);
+            throw new IllegalArgumentException("Жанры по следующим id не найдены: " + incorrectGenreIds);
+        }
         jdbcTemplate.batchUpdate(
                 sql1,
                 new BatchPreparedStatementSetter() {
