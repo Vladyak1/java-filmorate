@@ -56,6 +56,7 @@ public class FilmServiceImpl implements FilmService {
                 throw new IllegalArgumentException(GENRE_DOES_NOT_EXIST);
             }
         }
+
         return result;
     }
 

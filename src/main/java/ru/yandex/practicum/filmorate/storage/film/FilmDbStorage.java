@@ -140,7 +140,6 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public void addFilmGenre(Long filmId, Integer genreId) {
         final String sql = "insert into film_genres (film_id, genre_id) values (?, ?)";
-
         jdbcTemplate.update(sql, filmId, genreId);
     }
 
@@ -154,7 +153,6 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public void delFilmGenres(Long filmId) {
         final String sql = "delete from film_genres where film_id = ?";
-
         jdbcTemplate.update(sql, filmId);
     }
 
@@ -162,14 +160,12 @@ public class FilmDbStorage implements FilmStorage {
     public Mpa getFilmMpa(Long filmId) {
         final String sql = "select mr.id, mr.name from films f " +
                 "left join mpa_ratings mr on f.rating_mpa_id = mr.id where f.id = ?";
-
         return jdbcTemplate.queryForObject(sql, mpaRowMapper(), filmId);
     }
 
     @Override
     public void delFilmMpa(Long filmId) {
         final String sql = "update films set rating_mpa_id = null where id = ?";
-
         jdbcTemplate.update(sql, filmId);
     }
 

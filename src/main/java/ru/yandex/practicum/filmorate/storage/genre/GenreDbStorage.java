@@ -1,14 +1,17 @@
 package ru.yandex.practicum.filmorate.storage.genre;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.util.List;
-import java.util.Optional;
 
+@Slf4j
 @Component
 @AllArgsConstructor
 public class GenreDbStorage implements GenreStorage {
@@ -16,9 +19,14 @@ public class GenreDbStorage implements GenreStorage {
     private final String sql = "select * from genres";
 
     @Override
-    public Optional<Genre> getGenreById(int id) {
-        final String sql1 = sql + " where id = ?";
-        return Optional.ofNullable(jdbcTemplate.queryForObject(sql1, genreRowMapper(), id));
+    public Genre getGenreById(int id) {
+        String query = sql + " where id = ?";
+        try {
+            return jdbcTemplate.queryForObject(query, genreRowMapper(), id);
+        } catch (EmptyResultDataAccessException e) {
+            log.warn("Не удалось вернуть рейтинг жанр c id: {}.", id);
+            throw new NotFoundException("Не удалось вернуть жанр.");
+        }
     }
 
     @Override

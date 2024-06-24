@@ -2,9 +2,7 @@ package ru.yandex.practicum.filmorate.service.genre;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 
@@ -24,13 +22,7 @@ public class GenreServiceImpl implements GenreService {
 
     @Override
     public Genre getGenre(int id) {
-        Genre result;
-        try {
-            result = genreStorage.getGenreById(id).get();
-        } catch (EmptyResultDataAccessException e) {
-            log.warn("Не удалось вернуть жанр c id: {}.", id);
-            throw new NotFoundException("Не удалось вернуть жанр.");
-        }
-        return result;
+        log.info("Получен жанр по id: {}", id);
+        return genreStorage.getGenreById(id);
     }
 }
