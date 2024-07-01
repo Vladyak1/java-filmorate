@@ -1,56 +1,40 @@
 package ru.yandex.practicum.filmorate.model;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import ru.yandex.practicum.filmorate.validation.annotation.AfterCinemaBirthday;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.Size;
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Film.
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class Film {
     private Long id;
-
-    @NotBlank(message = "Название не должно быть пустым")
+    @NotBlank(message = "Название не может быть пустым")
     private String name;
 
-    @NotBlank(message = "Описание не должно быть пустым")
-    @Size(max = 200, message = "Максимальная длина описания — 200 символов")
+    @NotBlank(message = "У фильма должно быть описание")
+    @Size(max = 200, message = "Описание не должно быть больше 200 символов")
     private String description;
 
-    @NotNull(message = "Дата выхода фильма не должна быть пустой")
+    @NotNull(message = "У фильма должна быть указана дата релиза")
+    @AfterCinemaBirthday
     private LocalDate releaseDate;
 
-    @NotNull(message = "Длительность фильма не должна быть пустой")
-    @Positive(message = "Продолжительность фильма не может быть отрицательным числом")
-    private long duration;
+    @NotNull(message = "У фильма должна быть указана продолжительность")
+    @Positive(message = "Продолжительность фильма не может быть отрицательной")
+    private Integer duration;
 
-    private Set<Long> likes = new HashSet<>();
-
-    private Genre genre;
-
-    private MPA mpa;
-
-    private enum Genre {
-        COMEDY,
-        DRAMA,
-        CARTOON,
-        Thriller,
-        DOCUMENTARY,
-        ACTION
-    }
-
-    public enum MPA {
-        G, // у фильма нет возрастных ограничений,
-        PG, // детям рекомендуется смотреть фильм с родителями,
-        PG_13, // детям до 13 лет просмотр не желателен,
-        R, // лицам до 17 лет просматривать фильм можно только в присутствии взрослого,
-        NC_17, // лицам до 18 лет просмотр запрещён.
-    }
+    private Mpa mpa;
+    private List<Genre> genres = new ArrayList<>();
 }
