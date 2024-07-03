@@ -122,14 +122,14 @@ public class FilmServiceImpl implements FilmService {
         filmDbStorage.delLike(filmId, userId);
     }
 
-    @Override
+    /*@Override
     public List<Film> getPopularFilms(long count) {
         if (count <= 0) {
             throw new IllegalArgumentException("Запрошено отрицательное число");
         }
         log.info("Список {} популярных фильма(ов)", count);
         return filmDbStorage.getPopularFilms(count);
-    }
+    }*/
 
     @Override
     public Film getFilm(long id) {
@@ -143,5 +143,14 @@ public class FilmServiceImpl implements FilmService {
         directorStorage.getDirectorById(directorId)
                 .orElseThrow(() -> new NotFoundException("Режиссер не найден с ID " + directorId));
         return filmDbStorage.getDirectorFilmsSorted(directorId, sort);
+    }
+
+    @Override
+    public List<Film> getPopularFilms(long count, Integer genreId, Integer year) {
+        if (count <= 0) {
+            throw new IllegalArgumentException("Запрошено отрицательное число");
+        }
+        log.info("Список {} популярных фильма(ов)", count);
+        return filmDbStorage.getPopularFilms(count, genreId, year);
     }
 }
