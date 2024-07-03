@@ -24,12 +24,12 @@ public class ReviewsDbStorage implements ReviewsStorage {
             rs.getLong("user_id"),
             rs.getLong("film_id")
     );
-    private final String INSERT_SQL = """
+    private final static String INSERT_SQL = """
             INSERT INTO reviews
             (content, isPositive, user_id, film_id, useful)
             VALUES (?, ?, ?, ?, ?)
             """;
-    private final String UPDATE_SQL = """
+    private final static String UPDATE_SQL = """
             UPDATE reviews SET
             content = ?,
             isPositive = ?,
@@ -38,20 +38,20 @@ public class ReviewsDbStorage implements ReviewsStorage {
             useful = ?
             WHERE id = ?
             """;
-    private final String DELETE_SQL_BY_ID = """
+    private final static String DELETE_SQL_BY_ID = """
             DELETE FROM reviews
             WHERE id = ?
             """;
-    private final String SELECT_SQL_BY_ID = """
+    private final static String SELECT_SQL_BY_ID = """
             SELECT * FROM reviews
             WHERE id = ?
             """;
-    private final String SELECT_ALL_BY_FILM_ID_WITH_LIMIT = """
+    private final static String SELECT_ALL_BY_FILM_ID_WITH_LIMIT = """
             SELECT * FROM reviews
             WHERE film_id = ?
             LIMIT ?
             """;
-    private final String SELECT_ALL_WITH_LIMIT = """
+    private final static String SELECT_ALL_WITH_LIMIT = """
             SELECT * FROM reviews
             LIMIT ?
             """;

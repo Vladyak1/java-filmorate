@@ -9,14 +9,14 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 public class ReviewsLikeDbStorage implements ReviewsLikeStorage {
     private final JdbcTemplate jdbcTemplate;
-    private final String INSERT_REVIEW_LIKE = """
+    private final static String INSERT_REVIEW_LIKE = """
             INSERT INTO reviews_likes (reviews_id, user_id, isLike) VALUES (?, ?, ?)
             """;
-    private final String DELETE_REVIEW_LIKE = """
+    private final static String DELETE_REVIEW_LIKE = """
             DELETE FROM reviews_likes
             WHERE reviews_id = ? AND user_id = ?
             """;
-    private final String UPDATE_REVIEW_LIKE = """
+    private final static String UPDATE_REVIEW_LIKE = """
             UPDATE reviews_likes SET
             reviews_id = ?,
             user_id = ?,
