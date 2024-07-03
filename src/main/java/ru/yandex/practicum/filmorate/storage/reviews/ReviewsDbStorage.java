@@ -6,8 +6,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Reviews;
 
+import java.util.List;
 import java.util.Objects;
 
 @Component
@@ -22,13 +24,11 @@ public class ReviewsDbStorage implements ReviewsStorage {
             rs.getLong("user_id"),
             rs.getLong("film_id")
     );
-
     private final String INSERT_SQL = """
-            insert into reviews
+            INSERT INTO reviews
             (content, isPositive, user_id, film_id, useful)
             VALUES (?, ?, ?, ?, ?)
             """;
-
     private final String UPDATE_SQL = """
             UPDATE reviews SET
             content = ?,
@@ -38,15 +38,22 @@ public class ReviewsDbStorage implements ReviewsStorage {
             useful = ?
             WHERE id = ?
             """;
-
     private final String DELETE_SQL_BY_ID = """
             DELETE FROM reviews
             WHERE id = ?
             """;
-
     private final String SELECT_SQL_BY_ID = """
             SELECT * FROM reviews
             WHERE id = ?
+            """;
+    private final String SELECT_ALL_BY_FILM_ID_WITH_LIMIT = """
+            SELECT * FROM reviews
+            WHERE film_id = ?
+            LIMIT ?
+            """;
+    private final String SELECT_ALL_WITH_LIMIT = """
+            SELECT * FROM reviews
+            LIMIT ?
             """;
 
     @Override
@@ -82,7 +89,7 @@ public class ReviewsDbStorage implements ReviewsStorage {
                     entity.getReviewId()
             );
         } catch (DataAccessException ex) {
-            throw new RuntimeException("Удаление отзыва не удалось.", ex);
+            throw new RuntimeException("Обновление отзыва не удалось.", ex);
         }
         return entity;
     }
@@ -92,7 +99,7 @@ public class ReviewsDbStorage implements ReviewsStorage {
         try {
             jdbcTemplate.update(DELETE_SQL_BY_ID, id);
         } catch (DataAccessException ex) {
-            throw new RuntimeException("Failed to delete the review.", ex);
+            throw new RuntimeException("Удаление отзыва не удалось.", ex);
         }
     }
 
@@ -101,7 +108,17 @@ public class ReviewsDbStorage implements ReviewsStorage {
         try {
             return jdbcTemplate.queryForObject(SELECT_SQL_BY_ID, rowMapper, id);
         } catch (DataAccessException ex) {
-            throw new RuntimeException("Поиск отзыва не удался.", ex);
+            throw new NotFoundException("Отзыв с id " + id + " не существует.");
         }
+    }
+
+    @Override
+    public List<Reviews> findAllWithLimit(Integer count) {
+        return jdbcTemplate.query(SELECT_ALL_WITH_LIMIT, rowMapper, count);
+    }
+
+    @Override
+    public List<Reviews> findAllByFilmIdWithLimit(Long id, Integer count) {
+        return jdbcTemplate.query(SELECT_ALL_BY_FILM_ID_WITH_LIMIT, rowMapper, id, count);
     }
 }
