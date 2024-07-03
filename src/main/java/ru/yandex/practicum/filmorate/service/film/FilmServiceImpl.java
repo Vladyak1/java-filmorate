@@ -10,6 +10,7 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.user.UserService;
+import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.util.List;
@@ -20,6 +21,7 @@ import java.util.List;
 public class FilmServiceImpl implements FilmService {
     private final FilmStorage filmDbStorage;
     private final UserService userService;
+    private final DirectorStorage directorStorage;
     private static final String FILM_DOES_NOT_EXIST = "Такого фильма не существует";
     private static final String USER_DOES_NOT_EXIST = "Пользователь не найден";
     private static final String MPA_DOES_NOT_EXIST = "Рейтинг MPA не найден";
@@ -133,5 +135,13 @@ public class FilmServiceImpl implements FilmService {
     public Film getFilm(long id) {
         log.info("Получен фильм с id: {}", id);
         return filmDbStorage.findFilm(id);
+    }
+
+    @Override
+    public List<Film> getDirectorFilmsSorted(long directorId, String sort) {
+        log.info("Сортируем фильмы по {} для директора {}", sort, directorId);
+        directorStorage.getDirectorById(directorId)
+                .orElseThrow(() -> new NotFoundException("Режиссер не найден с ID " + directorId));
+        return filmDbStorage.getDirectorFilmsSorted(directorId, sort);
     }
 }
