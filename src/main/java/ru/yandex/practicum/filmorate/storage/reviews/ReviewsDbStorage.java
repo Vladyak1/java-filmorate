@@ -24,12 +24,12 @@ public class ReviewsDbStorage implements ReviewsStorage {
             rs.getLong("user_id"),
             rs.getLong("film_id")
     );
-    private final static String INSERT_SQL = """
+    private final String insertSql = """
             INSERT INTO reviews
             (content, isPositive, user_id, film_id, useful)
             VALUES (?, ?, ?, ?, ?)
             """;
-    private final static String UPDATE_SQL = """
+    private final String updateSql = """
             UPDATE reviews SET
             content = ?,
             isPositive = ?,
@@ -38,20 +38,20 @@ public class ReviewsDbStorage implements ReviewsStorage {
             useful = ?
             WHERE id = ?
             """;
-    private final static String DELETE_SQL_BY_ID = """
+    private final String deleteSqlById = """
             DELETE FROM reviews
             WHERE id = ?
             """;
-    private final static String SELECT_SQL_BY_ID = """
+    private final String selectSqlById = """
             SELECT * FROM reviews
             WHERE id = ?
             """;
-    private final static String SELECT_ALL_BY_FILM_ID_WITH_LIMIT = """
+    private final String selectAllByFilmIdWithLimit = """
             SELECT * FROM reviews
             WHERE film_id = ?
             LIMIT ?
             """;
-    private final static String SELECT_ALL_WITH_LIMIT = """
+    private final String selectAllWithLimit = """
             SELECT * FROM reviews
             LIMIT ?
             """;
@@ -61,7 +61,7 @@ public class ReviewsDbStorage implements ReviewsStorage {
         var keyHolder = new GeneratedKeyHolder();
 
         jdbcTemplate.update(connection -> {
-            var ps = connection.prepareStatement(INSERT_SQL, new String[]{"id"});
+            var ps = connection.prepareStatement(insertSql, new String[]{"id"});
             ps.setString(1, entity.getContent());
             ps.setBoolean(2, entity.getIsPositive());
             ps.setLong(3, entity.getUserId());
@@ -80,7 +80,7 @@ public class ReviewsDbStorage implements ReviewsStorage {
     public Reviews update(Reviews entity) {
         try {
             jdbcTemplate.update(
-                    UPDATE_SQL,
+                    updateSql,
                     entity.getContent(),
                     entity.getIsPositive(),
                     entity.getUserId(),
@@ -97,7 +97,7 @@ public class ReviewsDbStorage implements ReviewsStorage {
     @Override
     public void delete(Long id) {
         try {
-            jdbcTemplate.update(DELETE_SQL_BY_ID, id);
+            jdbcTemplate.update(deleteSqlById, id);
         } catch (DataAccessException ex) {
             throw new RuntimeException("Удаление отзыва не удалось.", ex);
         }
@@ -106,7 +106,7 @@ public class ReviewsDbStorage implements ReviewsStorage {
     @Override
     public Reviews findById(Long id) {
         try {
-            return jdbcTemplate.queryForObject(SELECT_SQL_BY_ID, rowMapper, id);
+            return jdbcTemplate.queryForObject(selectSqlById, rowMapper, id);
         } catch (DataAccessException ex) {
             throw new NotFoundException("Отзыв с id " + id + " не существует.");
         }
@@ -114,11 +114,11 @@ public class ReviewsDbStorage implements ReviewsStorage {
 
     @Override
     public List<Reviews> findAllWithLimit(Integer count) {
-        return jdbcTemplate.query(SELECT_ALL_WITH_LIMIT, rowMapper, count);
+        return jdbcTemplate.query(selectAllWithLimit, rowMapper, count);
     }
 
     @Override
     public List<Reviews> findAllByFilmIdWithLimit(Long id, Integer count) {
-        return jdbcTemplate.query(SELECT_ALL_BY_FILM_ID_WITH_LIMIT, rowMapper, id, count);
+        return jdbcTemplate.query(selectAllByFilmIdWithLimit, rowMapper, id, count);
     }
 }

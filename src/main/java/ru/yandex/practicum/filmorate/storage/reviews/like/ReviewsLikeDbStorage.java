@@ -9,14 +9,14 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 public class ReviewsLikeDbStorage implements ReviewsLikeStorage {
     private final JdbcTemplate jdbcTemplate;
-    private final static String INSERT_REVIEW_LIKE = """
+    private final String insertReviewLike = """
             INSERT INTO reviews_likes (reviews_id, user_id, isLike) VALUES (?, ?, ?)
             """;
-    private final static String DELETE_REVIEW_LIKE = """
+    private final String deleteReviewLike = """
             DELETE FROM reviews_likes
             WHERE reviews_id = ? AND user_id = ?
             """;
-    private final static String UPDATE_REVIEW_LIKE = """
+    private final String updateReviewLike = """
             UPDATE reviews_likes SET
             reviews_id = ?,
             user_id = ?,
@@ -26,13 +26,13 @@ public class ReviewsLikeDbStorage implements ReviewsLikeStorage {
 
     @Override
     public void save(Long reviewsId, Long userId, Boolean isLike) {
-        jdbcTemplate.update(INSERT_REVIEW_LIKE, reviewsId, userId, isLike);
+        jdbcTemplate.update(insertReviewLike, reviewsId, userId, isLike);
     }
 
     @Override
     public void delete(Long reviewsId, Long userId) {
         try {
-            jdbcTemplate.update(DELETE_REVIEW_LIKE, reviewsId, userId);
+            jdbcTemplate.update(deleteReviewLike, reviewsId, userId);
         } catch (DataAccessException ex) {
             throw new RuntimeException("Удаление отзыва не удалось.", ex);
         }
@@ -40,6 +40,6 @@ public class ReviewsLikeDbStorage implements ReviewsLikeStorage {
 
     @Override
     public void update(Long reviewsId, Long userId, Boolean isLike) {
-        jdbcTemplate.update(UPDATE_REVIEW_LIKE, reviewsId, userId, isLike, reviewsId, userId);
+        jdbcTemplate.update(updateReviewLike, reviewsId, userId, isLike, reviewsId, userId);
     }
 }

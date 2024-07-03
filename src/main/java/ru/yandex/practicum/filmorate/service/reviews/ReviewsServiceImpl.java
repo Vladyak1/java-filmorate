@@ -16,8 +16,8 @@ import java.util.List;
 public class ReviewsServiceImpl implements ReviewsService {
     private final ReviewsStorage reviewsStorage;
     private final ReviewsLikeDbStorage reviewsLikeStorage;
-    private final static long INCREMENT_ON_LIKE = 1;
-    private final static long DECREMENT_ON_DISLIKE = 1;
+    private final long incrementOnLike = 1;
+    private final long decrementOnDislike = 1;
 
     @Override
     public Reviews createReview(Reviews reviews) {
@@ -55,22 +55,22 @@ public class ReviewsServiceImpl implements ReviewsService {
 
     @Override
     public Reviews addLike(Long reviewsId, Long userId) {
-        return changeLikeStatus(reviewsId, userId, INCREMENT_ON_LIKE, true);
+        return changeLikeStatus(reviewsId, userId, incrementOnLike, true);
     }
 
     @Override
     public Reviews addDislike(Long reviewsId, Long userId) {
-        return changeLikeStatus(reviewsId, userId, -DECREMENT_ON_DISLIKE, false);
+        return changeLikeStatus(reviewsId, userId, -decrementOnDislike, false);
     }
 
     @Override
     public Reviews removeLike(Long reviewsId, Long userId) {
-        return changeLikeStatus(reviewsId, userId, -DECREMENT_ON_DISLIKE, null);
+        return changeLikeStatus(reviewsId, userId, -decrementOnDislike, null);
     }
 
     @Override
     public Reviews removeDislike(Long reviewsId, Long userId) {
-        return changeLikeStatus(reviewsId, userId, INCREMENT_ON_LIKE, null);
+        return changeLikeStatus(reviewsId, userId, incrementOnLike, null);
     }
 
     public Reviews changeLikeStatus(Long reviewsId, Long userId, Long incrementValue, Boolean isLike) {
