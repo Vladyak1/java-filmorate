@@ -9,10 +9,13 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.service.genre.GenreService;
+import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
+import ru.yandex.practicum.filmorate.storage.mapper.FilmSortRowMapper;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -25,6 +28,8 @@ import java.util.stream.Collectors;
 public class FilmDbStorage implements FilmStorage {
     private JdbcTemplate jdbcTemplate;
     private final GenreService genreService;
+    private final DirectorStorage directorStorage;
+    private final FilmSortRowMapper sortRowMapper;
 
     @Override
     public Film addFilm(Film film) {
@@ -55,7 +60,7 @@ public class FilmDbStorage implements FilmStorage {
                 .stream()
                 .map(Genre::getId)
                 .collect(Collectors.toSet());
-        Set<Integer> incorrectGenreIds =  filmGenresIds
+        Set<Integer> incorrectGenreIds = filmGenresIds
                 .stream()
                 .filter(genreId -> !genresIds.contains(genreId))
                 .collect(Collectors.toSet());
@@ -75,6 +80,7 @@ public class FilmDbStorage implements FilmStorage {
                         return genreList.size();
                     }
                 });
+        addDirectors(film.getId(), film.getDirectors());
 
         return film;
     }
@@ -190,6 +196,32 @@ public class FilmDbStorage implements FilmStorage {
         jdbcTemplate.update(sql, filmId);
     }
 
+    @Override
+    public List<Film> getDirectorFilmsSorted(long directorId, String sort) {
+        String sql = "";
+        switch (sort) {
+            case "year":
+                sql = "select * from films as f join mpa_ratings as mr on f.rating_mpa_id = mr.id " +
+                        "left join film_director as fd on f.id = fd.film_id " +
+                        "join directors as d on fd.director_id = d.director_id " +
+                        "where f.id in (select fd.film_id from film_director as fd where director_id = ?)" +
+                        "order by f.release_date";
+                break;
+            case "likes":
+                sql = "select * from films as f " +
+                        "join mpa_ratings as mr on f.rating_mpa_id = mr.id " +
+                        "left join film_director as fd on f.id = fd.film_id " +
+                        "join directors as d on fd.director_id = d.director_id " +
+                        "where f.id in (select fd.film_id from film_director as fd where director_id = ?) " +
+                        "and f.id in (select f.id from films as f left join film_likes as l on f.id = l.film_id " +
+                        "group by f.id order by count(l.film_id) desc)";
+
+                break;
+
+        }
+        return jdbcTemplate.query(sql, sortRowMapper, directorId);
+    }
+
     private RowMapper<Film> filmRowMapper() {
         return ((rs, rowNum) -> {
             Film film = new Film();
@@ -216,5 +248,12 @@ public class FilmDbStorage implements FilmStorage {
                 rs.getInt("id"),
                 rs.getString("name")
         ));
+    }
+
+    private void addDirectors(long film_id, List<Director> directors) {
+        if (!directors.isEmpty()) {
+            directorStorage.addDirectorsToFilm(film_id, directors);
+        }
+
     }
 }

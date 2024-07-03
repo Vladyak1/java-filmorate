@@ -34,4 +34,6 @@ public interface FilmStorage {
     Mpa getFilmMpa(Long filmId);
 
     void delFilmMpa(Long filmId);
+
+    List<Film> getDirectorFilmsSorted(long directorId, String sort);
 }
