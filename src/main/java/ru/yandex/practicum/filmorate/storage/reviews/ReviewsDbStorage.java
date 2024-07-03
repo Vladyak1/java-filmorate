@@ -46,13 +46,15 @@ public class ReviewsDbStorage implements ReviewsStorage {
             SELECT * FROM reviews
             WHERE id = ?
             """;
+    private final String selectAllWithLimit = """
+            SELECT * FROM reviews
+            ORDER BY useful DESC
+            LIMIT ?
+            """;
     private final String selectAllByFilmIdWithLimit = """
             SELECT * FROM reviews
             WHERE film_id = ?
-            LIMIT ?
-            """;
-    private final String selectAllWithLimit = """
-            SELECT * FROM reviews
+            ORDER BY useful DESC
             LIMIT ?
             """;
 
