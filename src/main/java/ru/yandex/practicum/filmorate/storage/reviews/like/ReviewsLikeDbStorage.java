@@ -26,7 +26,11 @@ public class ReviewsLikeDbStorage implements ReviewsLikeStorage {
 
     @Override
     public void save(Long reviewsId, Long userId, Boolean isLike) {
-        jdbcTemplate.update(insertReviewLike, reviewsId, userId, isLike);
+        try {
+            jdbcTemplate.update(insertReviewLike, reviewsId, userId, isLike);
+        } catch (DataAccessException ex) {
+            throw new RuntimeException("Добавление рейтинга отзыва не удалось.", ex);
+        }
     }
 
     @Override
@@ -34,12 +38,16 @@ public class ReviewsLikeDbStorage implements ReviewsLikeStorage {
         try {
             jdbcTemplate.update(deleteReviewLike, reviewsId, userId);
         } catch (DataAccessException ex) {
-            throw new RuntimeException("Удаление отзыва не удалось.", ex);
+            throw new RuntimeException("Удаление рейтинга отзыва не удалось.", ex);
         }
     }
 
     @Override
     public void update(Long reviewsId, Long userId, Boolean isLike) {
-        jdbcTemplate.update(updateReviewLike, reviewsId, userId, isLike, reviewsId, userId);
+        try {
+            jdbcTemplate.update(updateReviewLike, reviewsId, userId, isLike, reviewsId, userId);
+        } catch (DataAccessException ex) {
+            throw new RuntimeException("Обновление рейтинга отзыва не удалось.", ex);
+        }
     }
 }
