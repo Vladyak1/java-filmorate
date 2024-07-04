@@ -228,7 +228,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public List<Film> getFilmListBySearch(String textForSearch, Boolean searchByDirector, Boolean searchByTitle) {
         String sql = """
-                SELECT 
+                SELECT
                     films.*,
                     mpa_ratings.id AS rating_mpa_id,
                     mpa_ratings.name AS mpa_name,
@@ -274,10 +274,10 @@ public class FilmDbStorage implements FilmStorage {
     public List<Director> getDirectorsByFilmId(Long filmId) {
         String sql = """
                 SELECT d.director_id, d.director_name
-                FROM directors d 
+                FROM directors d
                     INNER JOIN film_director fd
                     ON fd.director_id = d.director_id
-                WHERE fd.film_id = :filmId 
+                WHERE fd.film_id = :filmId
                 """;
 
         var parameters = new MapSqlParameterSource();
