@@ -147,6 +147,15 @@ public class FilmServiceImpl implements FilmService {
     }
 
     @Override
+    public List<Film> getPopularFilms(long count, Integer genreId, Integer year) {
+        if (count <= 0) {
+            throw new IllegalArgumentException("Запрошено отрицательное число");
+        }
+        log.info("Список {} популярных фильма(ов)", count);
+        return filmDbStorage.getPopularFilms(count, genreId, year);
+    }
+
+    @Override
     public List<Film> getFilmListBySearch(String textForSearch, String filterCriteria) {
         log.info("Поиск фильмов по части строки {} для {}", textForSearch, filterCriteria);
         var filterCriteriaDelimiter = ",";

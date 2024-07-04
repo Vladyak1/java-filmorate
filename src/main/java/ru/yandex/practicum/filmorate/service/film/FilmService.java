@@ -19,11 +19,11 @@ public interface FilmService {
 
     void delLike(long filmId, long userId);
 
-    List<Film> getPopularFilms(long count);
-
     Film getFilm(long id);
 
     List<Film> getDirectorFilmsSorted(long directorId, String sort);
+
+    List<Film> getPopularFilms(long count, Integer genreId, Integer year);
 
     List<Film> getFilmListBySearch(String textForSearch, String filterCriteria);
 }
