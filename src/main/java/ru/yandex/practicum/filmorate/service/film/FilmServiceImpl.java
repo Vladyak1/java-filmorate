@@ -13,6 +13,7 @@ import ru.yandex.practicum.filmorate.service.user.UserService;
 import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
@@ -25,6 +26,7 @@ public class FilmServiceImpl implements FilmService {
     private static final String FILM_DOES_NOT_EXIST = "Такого фильма не существует";
     private static final String USER_DOES_NOT_EXIST = "Пользователь не найден";
     private static final String MPA_DOES_NOT_EXIST = "Рейтинг MPA не найден";
+    private final String filterCriteriaDelimiter = ",";
 
     @Override
     public Film addFilm(Film film) {
@@ -143,5 +145,16 @@ public class FilmServiceImpl implements FilmService {
         directorStorage.getDirectorById(directorId)
                 .orElseThrow(() -> new NotFoundException("Режиссер не найден с ID " + directorId));
         return filmDbStorage.getDirectorFilmsSorted(directorId, sort);
+    }
+
+    @Override
+    public List<Film> getFilmListBySearch(String textForSearch, String filterCriteria) {
+        log.info("Поиск фильмов по части строки {} для {}", textForSearch, filterCriteria);
+        var criterionList = Arrays.asList(filterCriteria.split(filterCriteriaDelimiter));
+
+        var searchByDirector = criterionList.contains("director");
+        var searchByTitle = criterionList.contains("title");
+
+        return filmDbStorage.getFilmListBySearch(textForSearch, searchByDirector, searchByTitle);
     }
 }
