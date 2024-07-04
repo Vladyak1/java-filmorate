@@ -17,6 +17,7 @@ import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.event.EventStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
@@ -140,15 +141,6 @@ public class FilmServiceImpl implements FilmService {
     }
 
     @Override
-    public List<Film> getPopularFilms(long count) {
-        if (count <= 0) {
-            throw new IllegalArgumentException("Запрошено отрицательное число");
-        }
-        log.info("Список {} популярных фильма(ов)", count);
-        return filmDbStorage.getPopularFilms(count);
-    }
-
-    @Override
     public Film getFilm(long id) {
         log.info("Получен фильм с id: {}", id);
         return filmDbStorage.findFilm(id);
@@ -160,5 +152,25 @@ public class FilmServiceImpl implements FilmService {
         directorStorage.getDirectorById(directorId)
                 .orElseThrow(() -> new NotFoundException("Режиссер не найден с ID " + directorId));
         return filmDbStorage.getDirectorFilmsSorted(directorId, sort);
+    }
+
+    @Override
+    public List<Film> getPopularFilms(long count, Integer genreId, Integer year) {
+        if (count <= 0) {
+            throw new IllegalArgumentException("Запрошено отрицательное число");
+        }
+        log.info("Список {} популярных фильма(ов)", count);
+        return filmDbStorage.getPopularFilms(count, genreId, year);
+    }
+
+    @Override
+    public List<Film> getFilmListBySearch(String textForSearch, String filterCriteria) {
+        log.info("Поиск фильмов по части строки {} для {}", textForSearch, filterCriteria);
+        var filterCriteriaDelimiter = ",";
+        var criterionList = Arrays.asList(filterCriteria.split(filterCriteriaDelimiter));
+        var searchByDirector = criterionList.contains("director");
+        var searchByTitle = criterionList.contains("title");
+
+        return filmDbStorage.getFilmListBySearch(textForSearch, searchByDirector, searchByTitle);
     }
 }

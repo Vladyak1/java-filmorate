@@ -1,11 +1,13 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
 import lombok.AllArgsConstructor;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.sql.PreparedStatement;
@@ -91,8 +93,14 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User findUser(Long id) {
+        User result;
         final String sql = "select * from users where id = ?";
-        return jdbcTemplate.queryForObject(sql, userRowMapper(), id);
+        try {
+           result = jdbcTemplate.queryForObject(sql, userRowMapper(), id);
+        } catch (EmptyResultDataAccessException e) {
+            throw new NotFoundException(e.getMessage());
+        }
+        return result;
     }
 
     private RowMapper<User> userRowMapper() {
