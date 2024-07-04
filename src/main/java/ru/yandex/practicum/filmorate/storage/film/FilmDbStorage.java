@@ -236,6 +236,10 @@ public class FilmDbStorage implements FilmStorage {
                 FROM films
                     LEFT JOIN mpa_ratings
                     ON films.rating_mpa_id = mpa_ratings.id
+                    LEFT JOIN film_director
+                    ON films.id = film_director.film_id
+                    LEFT JOIN directors
+                    ON film_director.director_id = directors.director_id
                     LEFT JOIN film_likes
                     ON films.id = film_likes.film_id
                 WHERE
