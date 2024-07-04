@@ -24,4 +24,6 @@ public interface FilmService {
     List<Film> getDirectorFilmsSorted(long directorId, String sort);
 
     List<Film> getPopularFilms(long count, Integer genreId, Integer year);
+
+    List<Film> getFilmListBySearch(String textForSearch, String filterCriteria);
 }

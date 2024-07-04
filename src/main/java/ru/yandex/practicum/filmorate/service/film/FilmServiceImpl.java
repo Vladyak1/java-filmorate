@@ -13,6 +13,7 @@ import ru.yandex.practicum.filmorate.service.user.UserService;
 import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
@@ -143,5 +144,16 @@ public class FilmServiceImpl implements FilmService {
         }
         log.info("Список {} популярных фильма(ов)", count);
         return filmDbStorage.getPopularFilms(count, genreId, year);
+    }
+
+    @Override
+    public List<Film> getFilmListBySearch(String textForSearch, String filterCriteria) {
+        log.info("Поиск фильмов по части строки {} для {}", textForSearch, filterCriteria);
+        var filterCriteriaDelimiter = ",";
+        var criterionList = Arrays.asList(filterCriteria.split(filterCriteriaDelimiter));
+        var searchByDirector = criterionList.contains("director");
+        var searchByTitle = criterionList.contains("title");
+
+        return filmDbStorage.getFilmListBySearch(textForSearch, searchByDirector, searchByTitle);
     }
 }
