@@ -122,15 +122,6 @@ public class FilmServiceImpl implements FilmService {
         filmDbStorage.delLike(filmId, userId);
     }
 
-    /*@Override
-    public List<Film> getPopularFilms(long count) {
-        if (count <= 0) {
-            throw new IllegalArgumentException("Запрошено отрицательное число");
-        }
-        log.info("Список {} популярных фильма(ов)", count);
-        return filmDbStorage.getPopularFilms(count);
-    }*/
-
     @Override
     public Film getFilm(long id) {
         log.info("Получен фильм с id: {}", id);
