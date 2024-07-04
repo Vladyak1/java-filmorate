@@ -4,7 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Reviews;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
+import ru.yandex.practicum.filmorate.model.enums.Operation;
+import ru.yandex.practicum.filmorate.storage.event.EventStorage;
 import ru.yandex.practicum.filmorate.storage.reviews.ReviewsStorage;
 import ru.yandex.practicum.filmorate.storage.reviews.like.ReviewsLikeDbStorage;
 
@@ -16,6 +20,7 @@ import java.util.List;
 public class ReviewsServiceImpl implements ReviewsService {
     private final ReviewsStorage reviewsStorage;
     private final ReviewsLikeDbStorage reviewsLikeStorage;
+    private final EventStorage eventStorage;
     private final long incrementOnLike = 1;
     private final long decrementOnDislike = 1;
 
@@ -26,16 +31,36 @@ public class ReviewsServiceImpl implements ReviewsService {
         } else if (reviews.getUserId() < 0) {
             throw new NotFoundException("Поле: userId не может быть отрицательным");
         }
-        return reviewsStorage.save(reviews);
+        Reviews newReview = reviewsStorage.save(reviews);
+        eventStorage.addEvent(Event.builder()
+                .userId(newReview.getUserId())
+                .entityId(newReview.getReviewId())
+                .eventType(EventType.REVIEW)
+                .operation(Operation.ADD)
+                .build());
+        return newReview;
     }
 
     @Override
     public Reviews updateReview(Reviews reviews) {
-        return reviewsStorage.update(reviews);
+        Reviews updatedReview = reviewsStorage.update(reviews);
+        eventStorage.addEvent(Event.builder()
+                .userId(updatedReview.getUserId())
+                .entityId(updatedReview.getReviewId())
+                .eventType(EventType.REVIEW)
+                .operation(Operation.UPDATE)
+                .build());
+        return updatedReview;
     }
 
     @Override
     public void deleteReview(Long id) {
+        eventStorage.addEvent(Event.builder()
+                .userId(reviewsStorage.findById(id).getUserId())
+                .entityId(id)
+                .eventType(EventType.REVIEW)
+                .operation(Operation.REMOVE)
+                .build());
         reviewsStorage.delete(id);
     }
 

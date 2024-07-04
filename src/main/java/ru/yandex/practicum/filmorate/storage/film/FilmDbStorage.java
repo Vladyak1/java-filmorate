@@ -239,15 +239,13 @@ public class FilmDbStorage implements FilmStorage {
     private RowMapper<Genre> genreRowMapper() {
         return ((rs, rowNum) -> new Genre(
                 rs.getInt("id"),
-                rs.getString("name")
-        ));
+                rs.getString("name")));
     }
 
     private RowMapper<Mpa> mpaRowMapper() {
         return ((rs, rowNum) -> new Mpa(
                 rs.getInt("id"),
-                rs.getString("name")
-        ));
+                rs.getString("name")));
     }
 
     private void addDirectors(long film_id, List<Director> directors) {
