@@ -9,6 +9,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -157,7 +158,7 @@ public class FilmDbStorage implements FilmStorage {
         try {
             result = jdbcTemplate.queryForObject(sql, filmRowMapper(), id);
         } catch (EmptyResultDataAccessException e) {
-            throw new RuntimeException(e.getCause());
+            throw new NotFoundException(e.getMessage());
         }
         assert result != null;
         result.setGenres(getFilmGenres(id));
