@@ -142,11 +142,43 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public List<Film> getPopularFilms(long count) {
-        final String sql = "select f.*, mr.name mpa_name from films f " +
-                "left join film_likes fl on f.id = fl.film_id join mpa_ratings mr on f.rating_mpa_id = mr.id " +
-                "group by f.name, f.id, mr.name order by count(fl.film_id) desc limit ?";
-        return jdbcTemplate.query(sql, filmRowMapper(), count);
+    public List<Film> getPopularFilms(long count, Integer genreId, Integer year) {
+        StringBuilder sql = new StringBuilder(
+                "SELECT f.*, mr.name mpa_name FROM films f " +
+                        "JOIN film_genres fg ON f.id = fg.film_id " +
+                        "JOIN mpa_ratings mr on f.rating_mpa_id = mr.id " +
+                        "LEFT JOIN film_likes fl ON f.id = fl.film_id "
+        );
+
+        List<Object> params = new ArrayList<>();
+
+        boolean hasGenre = genreId != null;
+        boolean hasYear = year != null;
+
+        if (hasGenre || hasYear) {
+            sql.append("WHERE ");
+        }
+
+        if (hasGenre) {
+            sql.append("fg.genre_id = ? ");
+            params.add(genreId);
+        }
+
+        if (hasGenre && hasYear) {
+            sql.append("AND ");
+        }
+
+        if (hasYear) {
+            sql.append("YEAR(f.release_date) = ? ");
+            params.add(year);
+        }
+
+        sql.append("GROUP BY f.id, mr.name ");
+        sql.append("ORDER BY COUNT(fl.user_id) DESC ");
+        sql.append("LIMIT ?");
+        params.add(count);
+
+        return jdbcTemplate.query(sql.toString(), filmRowMapper(), params.toArray());
     }
 
     @Override
