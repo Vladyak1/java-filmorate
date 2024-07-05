@@ -173,4 +173,15 @@ public class FilmServiceImpl implements FilmService {
 
         return filmDbStorage.getFilmListBySearch(textForSearch, searchByDirector, searchByTitle);
     }
+
+    @Override
+    public List<Film> getCommonFilms(long userId, long friendId) {
+        log.info("Ищем общие фильмы User`a {} c Friend`ом {}", userId, friendId);
+        try {
+            return filmDbStorage.getCommonFilms(userId, friendId);
+        } catch (EmptyResultDataAccessException e) {
+            log.warn(USER_DOES_NOT_EXIST);
+            throw new NotFoundException(USER_DOES_NOT_EXIST);
+        }
+    }
 }
