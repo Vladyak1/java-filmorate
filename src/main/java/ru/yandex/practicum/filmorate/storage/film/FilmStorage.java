@@ -36,4 +36,6 @@ public interface FilmStorage {
     void delFilmMpa(Long filmId);
 
     List<Film> getDirectorFilmsSorted(long directorId, String sort);
+
+    List<Film> getCommonFilms(long userId, long friendId);
 }

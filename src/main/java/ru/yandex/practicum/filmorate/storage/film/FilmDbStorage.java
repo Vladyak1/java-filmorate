@@ -223,6 +223,17 @@ public class FilmDbStorage implements FilmStorage {
         return jdbcTemplate.query(sql, sortRowMapper, directorId);
     }
 
+    @Override
+    public List<Film> getCommonFilms(long userId, long friendId) {
+        final String sql = "select films.*, mpa_ratings.name as mpa_name from films " +
+                "join mpa_ratings on mpa_ratings.id = films.rating_mpa_id " +
+                "join film_likes on films.id = film_likes.film_id " +
+                "where film_likes.user_id in (?, ?) " +
+                "group by film_id " +
+                "order by count(film_likes.film_id) desc";
+        return jdbcTemplate.query(sql, filmRowMapper(), userId, friendId);
+    }
+
     private RowMapper<Film> filmRowMapper() {
         return ((rs, rowNum) -> {
             Film film = new Film();
@@ -255,6 +266,5 @@ public class FilmDbStorage implements FilmStorage {
         if (!directors.isEmpty()) {
             directorStorage.addDirectorsToFilm(film_id, directors);
         }
-
     }
 }
