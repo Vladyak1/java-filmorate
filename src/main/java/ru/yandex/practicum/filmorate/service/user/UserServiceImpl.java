@@ -6,7 +6,11 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
+import ru.yandex.practicum.filmorate.model.enums.Operation;
+import ru.yandex.practicum.filmorate.storage.event.EventStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserDbStorage;
 
 import java.util.List;
@@ -16,6 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserDbStorage userDbStorage;
+    private final EventStorage eventStorage;
     private static final String USER_DOES_NOT_EXIST = "Такого пользователя не существует";
 
     @Override
@@ -83,6 +88,12 @@ public class UserServiceImpl implements UserService {
         }
         log.info("Пользователь с id: {} добавил в друзья пользователя с id: {}", id, friendId);
         userDbStorage.addFriend(id, friendId);
+        eventStorage.addEvent(Event.builder()
+                .userId(id)
+                .entityId(friendId)
+                .eventType(EventType.FRIEND)
+                .operation(Operation.ADD)
+                .build());
     }
 
     @Override
@@ -101,6 +112,12 @@ public class UserServiceImpl implements UserService {
 
         log.info("Пользователь с id: {} удалил из друзей пользователя с id: {}", id, friendId);
         userDbStorage.delFriend(id, friendId);
+        eventStorage.addEvent(Event.builder()
+                .userId(id)
+                .entityId(friendId)
+                .eventType(EventType.FRIEND)
+                .operation(Operation.REMOVE)
+                .build());
     }
 
     @Override
@@ -129,5 +146,16 @@ public class UserServiceImpl implements UserService {
     public User getUser(long id) {
         log.info("Получен пользователь с id: {}", id);
         return userDbStorage.findUser(id);
+    }
+
+    @Override
+    public List<Event> getUserFeed(long id) {
+        log.info("Получен запрос на ленту пользователя с id: {}", id);
+        try {
+            userDbStorage.findUser(id);
+        } catch (EmptyResultDataAccessException e) {
+            throw new NotFoundException(USER_DOES_NOT_EXIST);
+        }
+        return eventStorage.getEventsByUserId(id);
     }
 }

@@ -8,9 +8,13 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
+import ru.yandex.practicum.filmorate.model.enums.Operation;
 import ru.yandex.practicum.filmorate.service.user.UserService;
 import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
+import ru.yandex.practicum.filmorate.storage.event.EventStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.util.Arrays;
@@ -23,6 +27,7 @@ public class FilmServiceImpl implements FilmService {
     private final FilmStorage filmDbStorage;
     private final UserService userService;
     private final DirectorStorage directorStorage;
+    private final EventStorage eventStorage;
     private static final String FILM_DOES_NOT_EXIST = "Такого фильма не существует";
     private static final String USER_DOES_NOT_EXIST = "Пользователь не найден";
     private static final String MPA_DOES_NOT_EXIST = "Рейтинг MPA не найден";
@@ -103,6 +108,12 @@ public class FilmServiceImpl implements FilmService {
         }
         log.info("Фильму с id: {} поставили лайк", filmId);
         filmDbStorage.addLike(filmId, userId);
+        eventStorage.addEvent(Event.builder()
+                .userId(userId)
+                .entityId(filmId)
+                .eventType(EventType.LIKE)
+                .operation(Operation.ADD)
+                .build());
     }
 
     @Override
@@ -121,6 +132,12 @@ public class FilmServiceImpl implements FilmService {
         }
         log.info("У фильма с id: {} убрали лайк", filmId);
         filmDbStorage.delLike(filmId, userId);
+        eventStorage.addEvent(Event.builder()
+                .userId(userId)
+                .entityId(filmId)
+                .eventType(EventType.LIKE)
+                .operation(Operation.REMOVE)
+                .build());
     }
 
     @Override
