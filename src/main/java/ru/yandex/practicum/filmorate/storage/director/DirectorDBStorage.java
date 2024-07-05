@@ -8,7 +8,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Director;
-import ru.yandex.practicum.filmorate.storage.mapper.DirectorRowMapper;
+import ru.yandex.practicum.filmorate.storage.mapper.DirectorMapper;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -18,7 +18,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class DirectorDBStorage implements DirectorStorage {
     private final NamedParameterJdbcTemplate jdbcTemplate;
-    private final DirectorRowMapper directorMapper;
+    private final DirectorMapper directorMapper;
 
     @Override
     public List<Director> getDirectors() {

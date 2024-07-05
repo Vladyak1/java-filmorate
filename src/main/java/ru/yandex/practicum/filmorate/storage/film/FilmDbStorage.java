@@ -19,7 +19,6 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.service.genre.GenreService;
 import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
-import ru.yandex.practicum.filmorate.storage.mapper.FilmSortRowMapper;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -33,7 +32,6 @@ public class FilmDbStorage implements FilmStorage {
     private JdbcTemplate jdbcTemplate;
     private final GenreService genreService;
     private final DirectorStorage directorStorage;
-    private final FilmSortRowMapper sortRowMapper;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     @Override
@@ -235,29 +233,41 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getDirectorFilmsSorted(long directorId, String sort) {
-        String sql = "";
+        String sql;
         switch (sort) {
-            case "year":
-                sql = "select * from films as f join mpa_ratings as mr on f.rating_mpa_id = mr.id " +
-                        "left join film_director as fd on f.id = fd.film_id " +
-                        "join directors as d on fd.director_id = d.director_id " +
-                        "where f.id in (select fd.film_id from film_director as fd where director_id = ?)" +
-                        "order by f.release_date";
-                break;
-            case "likes":
-                sql = "select * from films as f " +
-                        "join mpa_ratings as mr on f.rating_mpa_id = mr.id " +
-                        "left join film_director as fd on f.id = fd.film_id " +
-                        "join directors as d on fd.director_id = d.director_id " +
-                        "where f.id in (select fd.film_id from film_director as fd where director_id = ?) " +
-                        "and f.id in (select f.id from films as f left join film_likes as l on f.id = l.film_id " +
-                        "group by f.id order by count(l.film_id) desc)";
+            case "year" -> sql =
+                    """
+                            select * from film_director as fd
+                            join films as f ON fd.film_id=f.id
+                            left join mpa_ratings on f.rating_mpa_id = mpa_ratings.id
+                            where fd.director_id= :directorId
+                            order by f.release_date
+                            """;
 
-                break;
-            default:
-                throw new ValidationException("Неизвестный параметр сортировки: " + sort);
+            case "likes" -> sql =
+                    """
+                            select * from film_director as fd
+                            join films f ON fd.film_id=f.id
+                            left join mpa_ratings on f.rating_mpa_id = mpa_ratings.id
+                            where fd.director_id= :directorId
+                            and f.id in (select f.id  from films as f
+                            left join film_likes as l on f.id = l.film_id
+                            group by f.id
+                            order by count(l.film_id) desc)
+                            """;
+            default -> throw new ValidationException("Неизвестный параметр сортировки: " + sort);
         }
-        return jdbcTemplate.query(sql, sortRowMapper, directorId);
+        return namedParameterJdbcTemplate.query(sql, Map.of("directorId", directorId),
+                (rs, rowNum) -> Film.builder()
+                        .id(rs.getLong("id"))
+                        .name(rs.getString("name"))
+                        .description(rs.getString("description"))
+                        .releaseDate(rs.getDate("release_date").toLocalDate())
+                        .duration(rs.getInt("duration"))
+                        .mpa(new Mpa(rs.getInt("rating_mpa_id"), rs.getString("name")))
+                        .genres(getFilmGenres(rs.getLong("id")))
+                        .directors(getDirectorsByFilmId(rs.getLong("id")))
+                        .build());
     }
 
     @Override
