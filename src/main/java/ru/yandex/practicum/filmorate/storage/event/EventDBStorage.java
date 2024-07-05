@@ -10,6 +10,7 @@ import ru.yandex.practicum.filmorate.storage.mapper.EventMapper;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Repository
 @RequiredArgsConstructor
@@ -20,7 +21,8 @@ public class EventDBStorage implements EventStorage {
     @Override
     public List<Event> getEventsByUserId(long userId) {
         try {
-            return jdbcTemplate.query("select * from events", eventMapper);
+            return jdbcTemplate.query("select * from events where user_id = :userId",
+                    Map.of("userId", userId), eventMapper);
         } catch (EmptyResultDataAccessException e) {
             return Collections.emptyList();
         }
