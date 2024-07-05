@@ -12,6 +12,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -38,7 +39,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public Film addFilm(Film film) {
         final String sql = "insert into films (name, release_date, description, duration, rating_mpa_id) " +
-                           "values (?, ?, ?, ?, ?)";
+                "values (?, ?, ?, ?, ?)";
 
         KeyHolder gkh = new GeneratedKeyHolder();
 
@@ -104,7 +105,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public Film updFilm(Film film) {
         final String sql = "update films set name = ?, release_date = ?, description = ?, duration = ? " +
-                           "where id = ?";
+                "where id = ?";
         jdbcTemplate.update(sql, film.getName(), film.getReleaseDate(), film.getDescription(),
                 film.getDuration(), film.getId());
 
@@ -129,7 +130,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public List<Film> getFilms() {
         final String sql = "select f.*, mr.name mpa_name from films f join mpa_ratings mr on f.rating_mpa_id = mr.id " +
-                           "order by f.id";
+                "order by f.id";
         return jdbcTemplate.query(sql, filmRowMapper());
     }
 
@@ -189,7 +190,7 @@ public class FilmDbStorage implements FilmStorage {
     public Film findFilm(Long id) {
         Film result;
         final String sql = "select f.*, mr.name mpa_name from films f join mpa_ratings mr on f.rating_mpa_id = mr.id " +
-                           "where f.id = ?";
+                "where f.id = ?";
         try {
             result = jdbcTemplate.queryForObject(sql, filmRowMapper(), id);
         } catch (EmptyResultDataAccessException e) {
@@ -209,7 +210,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public List<Genre> getFilmGenres(Long filmId) {
         final String sql = "select distinct g.id as id, g.name from film_genres fg left join genres g on " +
-                           "fg.genre_id = g.id where film_id = ?";
+                "fg.genre_id = g.id where film_id = ?";
         return jdbcTemplate.query(sql, genreRowMapper(), filmId);
     }
 
@@ -222,7 +223,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public Mpa getFilmMpa(Long filmId) {
         final String sql = "select mr.id, mr.name from films f " +
-                           "left join mpa_ratings mr on f.rating_mpa_id = mr.id where f.id = ?";
+                "left join mpa_ratings mr on f.rating_mpa_id = mr.id where f.id = ?";
         return jdbcTemplate.queryForObject(sql, mpaRowMapper(), filmId);
     }
 
@@ -238,22 +239,23 @@ public class FilmDbStorage implements FilmStorage {
         switch (sort) {
             case "year":
                 sql = "select * from films as f join mpa_ratings as mr on f.rating_mpa_id = mr.id " +
-                      "left join film_director as fd on f.id = fd.film_id " +
-                      "join directors as d on fd.director_id = d.director_id " +
-                      "where f.id in (select fd.film_id from film_director as fd where director_id = ?)" +
-                      "order by f.release_date";
+                        "left join film_director as fd on f.id = fd.film_id " +
+                        "join directors as d on fd.director_id = d.director_id " +
+                        "where f.id in (select fd.film_id from film_director as fd where director_id = ?)" +
+                        "order by f.release_date";
                 break;
             case "likes":
                 sql = "select * from films as f " +
-                      "join mpa_ratings as mr on f.rating_mpa_id = mr.id " +
-                      "left join film_director as fd on f.id = fd.film_id " +
-                      "join directors as d on fd.director_id = d.director_id " +
-                      "where f.id in (select fd.film_id from film_director as fd where director_id = ?) " +
-                      "and f.id in (select f.id from films as f left join film_likes as l on f.id = l.film_id " +
-                      "group by f.id order by count(l.film_id) desc)";
+                        "join mpa_ratings as mr on f.rating_mpa_id = mr.id " +
+                        "left join film_director as fd on f.id = fd.film_id " +
+                        "join directors as d on fd.director_id = d.director_id " +
+                        "where f.id in (select fd.film_id from film_director as fd where director_id = ?) " +
+                        "and f.id in (select f.id from films as f left join film_likes as l on f.id = l.film_id " +
+                        "group by f.id order by count(l.film_id) desc)";
 
                 break;
-
+            default:
+                throw new ValidationException("Неизвестный параметр сортировки: " + sort);
         }
         return jdbcTemplate.query(sql, sortRowMapper, directorId);
     }
