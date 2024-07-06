@@ -18,6 +18,8 @@ import ru.yandex.practicum.filmorate.storage.event.EventStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 @Slf4j
@@ -187,8 +189,7 @@ public class FilmServiceImpl implements FilmService {
         try {
             return filmDbStorage.getCommonFilms(userId, friendId);
         } catch (EmptyResultDataAccessException e) {
-            log.warn("Ошибка запроса");
-            throw new NotFoundException("Ошибка запроса");
+            return Collections.emptyList();
         }
     }
 }
