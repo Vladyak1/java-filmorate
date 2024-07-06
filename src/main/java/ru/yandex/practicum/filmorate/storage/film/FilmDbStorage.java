@@ -337,6 +337,41 @@ public class FilmDbStorage implements FilmStorage {
         ));
     }
 
+    @Override
+    public List<Film> getCommonFilms(long userId, long friendId) {
+        String sql = """
+                SELECT f.*,
+                       mr.*,
+                       count(fl.film_id)
+                FROM film_likes AS fl
+                JOIN films AS f ON fl.film_id = f.id
+                LEFT JOIN mpa_ratings AS mr ON f.rating_mpa_id = mr.id
+                WHERE fl.user_id = :userId
+                  AND fl.film_id in
+                    (SELECT film_id
+                     FROM film_likes
+                     WHERE user_id = :friendId)
+                GROUP BY f.id
+                ORDER BY count(fl.film_id) DESC
+                """;
+        MapSqlParameterSource parameters = new MapSqlParameterSource();
+        parameters.addValue("userId", userId);
+        parameters.addValue("friendId", friendId);
+
+        return namedParameterJdbcTemplate.query(sql, parameters, (rs, rowNum) -> {
+            Film film = new Film();
+            film.setId(rs.getLong("id"));
+            film.setName(rs.getString("name"));
+            film.setDescription(rs.getString("description"));
+            film.setReleaseDate(rs.getDate("release_date").toLocalDate());
+            film.setDuration(rs.getInt("duration"));
+            film.setMpa(new Mpa(rs.getInt("rating_mpa_id"), rs.getString("mpa_ratings.name")));
+            film.setGenres(getFilmGenres(film.getId()));
+            film.setDirectors(getDirectorsByFilmId(film.getId()));
+            return film;
+        });
+    }
+
     private RowMapper<Film> filmRowMapper() {
         return ((rs, rowNum) -> {
             Film film = new Film();
@@ -367,6 +402,5 @@ public class FilmDbStorage implements FilmStorage {
         if (!directors.isEmpty()) {
             directorStorage.addDirectorsToFilm(film_id, directors);
         }
-
     }
 }

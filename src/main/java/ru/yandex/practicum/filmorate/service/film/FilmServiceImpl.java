@@ -18,6 +18,7 @@ import ru.yandex.practicum.filmorate.storage.event.EventStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @Slf4j
@@ -172,5 +173,22 @@ public class FilmServiceImpl implements FilmService {
         var searchByTitle = criterionList.contains("title");
 
         return filmDbStorage.getFilmListBySearch(textForSearch, searchByDirector, searchByTitle);
+    }
+
+    @Override
+    public List<Film> getCommonFilms(long userId, long friendId) {
+        try {
+            userService.getUser(userId);
+            userService.getUser(friendId);
+        } catch (EmptyResultDataAccessException e) {
+            log.warn(USER_DOES_NOT_EXIST);
+            throw new NotFoundException(USER_DOES_NOT_EXIST);
+        }
+        log.info("Ищем общие фильмы User`a {} c Friend`ом {}", userId, friendId);
+        try {
+            return filmDbStorage.getCommonFilms(userId, friendId);
+        } catch (EmptyResultDataAccessException e) {
+            return Collections.emptyList();
+        }
     }
 }
