@@ -1,0 +1,103 @@
+Table films {
+  id integer [primary key]
+  name varchar
+  description varchar
+  releaseDate timestamp
+  duration integer
+  rating_mpa_id varchar
+}
+
+Table genres {
+  id integer [primary key]
+  name varchar [primary key]
+}
+
+Table film_genres {
+  film_id integer [primary key]
+  genre_id integer [primary key]
+}
+
+Table mpa_ratings {
+  id integer [primary key]
+  mpa_rating varchar
+}
+
+Table film_likes {
+  user_id integer pk
+  film_id integer pk
+}
+
+Table users {
+  id integer [primary key]
+  email varchar
+  login varchar
+  name varchar
+  birthday timestamp
+}
+
+Table friends {
+  user_id integer [primary key]
+  friend_id integer [primary key]
+}
+
+Table directors {
+  director_id integer [primary key]
+  director_name integer
+}
+
+Table film_director {
+  film_id integer [primary key]
+  director_id integer [primary key]
+}
+
+Table reviews {
+  id integer [primary key]
+  content varchar
+  isPositive boolean
+  user_id integer
+  film_id integer
+  useful integer
+}
+
+Table reviews_likes {
+  reviews_id integer [primary key]
+  user_id integer [primary key]
+  isLike boolean
+}
+
+Table events {
+  event_id integer [primary key]
+  user_id integer
+  entity_id integer
+  event_type varchar
+  operation varchar
+  timestamp timestamp
+}
+
+Ref: events.user_id - users.id
+
+Ref: reviews_likes.user_id - users.id
+
+Ref: reviews_likes.reviews_id - reviews.id
+
+Ref: reviews.film_id - films.id
+
+Ref: reviews.user_id - users.id
+
+Ref: film_director.director_id - directors.director_id
+
+Ref: film_director.film_id - films.id
+
+Ref: friends.friend_id > users.id
+
+Ref: friends.user_id > users.id
+
+Ref: film_likes.user_id > users.id
+
+Ref: film_likes.film_id > films.id
+
+Ref: film_genres.film_id > films.id
+
+Ref: mpa_ratings.id - films.rating_mpa_id
+
+Ref: film_genres.genre_id > genres.id
