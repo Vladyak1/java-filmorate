@@ -65,7 +65,7 @@ create table if not exists film_director
 (
     film_id     integer references films (id) on delete cascade,
     director_id integer references directors (director_id) on delete cascade,
-    primary key (film_id, director_id)
+    primary key (film_id)
 );
 
 create table if not exists reviews

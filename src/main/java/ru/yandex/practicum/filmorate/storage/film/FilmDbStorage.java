@@ -11,6 +11,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Director;
@@ -102,10 +103,10 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film updFilm(Film film) {
-        final String sql = "update films set name = ?, release_date = ?, description = ?, duration = ? " +
-                "where id = ?";
+        final String sql = "update films set name = ?, release_date = ?, description = ?, duration = ?," +
+                "rating_mpa_id = ? where id = ?";
         jdbcTemplate.update(sql, film.getName(), film.getReleaseDate(), film.getDescription(),
-                film.getDuration(), film.getId());
+                film.getDuration(), film.getMpa().getId(), film.getId());
 
         jdbcTemplate.update("delete from FILM_GENRES where FILM_ID = ?", film.getId());
 
@@ -147,7 +148,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public List<Film> getPopularFilms(long count, Integer genreId, Integer year) {
         StringBuilder sql = new StringBuilder(
-                "SELECT f.*, mr.name mpa_name FROM films f " +
+                "SELECT * FROM films f " +
                         "JOIN film_genres fg ON f.id = fg.film_id " +
                         "JOIN mpa_ratings mr on f.rating_mpa_id = mr.id " +
                         "LEFT JOIN film_likes fl ON f.id = fl.film_id "
@@ -176,7 +177,7 @@ public class FilmDbStorage implements FilmStorage {
             params.add(year);
         }
 
-        sql.append("GROUP BY f.id, mr.name ");
+        sql.append("GROUP BY f.id, fl.user_id");
         sql.append("ORDER BY COUNT(fl.user_id) DESC ");
         sql.append("LIMIT ?");
         params.add(count);
@@ -380,8 +381,10 @@ public class FilmDbStorage implements FilmStorage {
             film.setDescription(rs.getString("description"));
             film.setReleaseDate(rs.getDate("release_date").toLocalDate());
             film.setDuration(rs.getInt("duration"));
-            film.setMpa(new Mpa(rs.getInt("rating_mpa_id"), rs.getString("mpa_name")));
-
+            film.setMpa(new Mpa(rs.getInt("rating_mpa_id"),
+                    rs.getString("mpa_ratings.name")));
+film.setGenres(getFilmGenres(rs.getLong("id")));
+            film.setDirectors(getDirectorsByFilmId(rs.getLong("id")));
             return film;
         });
     }
@@ -399,7 +402,7 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     private void addDirectors(long film_id, List<Director> directors) {
-        if (!directors.isEmpty()) {
+        if (!CollectionUtils.isEmpty(directors)) {
             directorStorage.addDirectorsToFilm(film_id, directors);
         }
     }
