@@ -123,7 +123,9 @@ public class FilmDbStorage implements FilmStorage {
                         return genreList.size();
                     }
                 });
-        return film;
+        directorStorage.deleteDirectorFromFilm(film.getId());
+        addDirectors(film.getId(), film.getDirectors());
+        return findFilm(film.getId());
     }
 
     @Override
@@ -135,7 +137,7 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public void addLike(long filmId, long userId) {
-        final String sql = "insert into film_likes (user_id, film_id) values (?, ?)";
+        final String sql = "merge into film_likes (user_id, film_id) values (?, ?)";
         jdbcTemplate.update(sql, userId, filmId);
     }
 
@@ -148,8 +150,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public List<Film> getPopularFilms(long count, Integer genreId, Integer year) {
         StringBuilder sql = new StringBuilder(
-                "SELECT * FROM films f " +
-                        "JOIN film_genres fg ON f.id = fg.film_id " +
+                "SELECT f.*, mr.* FROM films f " +
                         "JOIN mpa_ratings mr on f.rating_mpa_id = mr.id " +
                         "LEFT JOIN film_likes fl ON f.id = fl.film_id "
         );
@@ -158,6 +159,10 @@ public class FilmDbStorage implements FilmStorage {
 
         boolean hasGenre = genreId != null;
         boolean hasYear = year != null;
+
+        if (hasGenre) {
+            sql.append("LEFT JOIN film_genres fg ON f.id = fg.film_id ");
+        }
 
         if (hasGenre || hasYear) {
             sql.append("WHERE ");
@@ -173,11 +178,14 @@ public class FilmDbStorage implements FilmStorage {
         }
 
         if (hasYear) {
-            sql.append("YEAR(f.release_date) = ? ");
+            sql.append("YEAR (f.release_date) = ? ");
             params.add(year);
         }
 
-        sql.append("GROUP BY f.id, fl.user_id");
+        sql.append("GROUP BY f.id, fl.user_id ");
+        if (hasGenre) {
+            sql.append(",fg.genre_id ");
+        }
         sql.append("ORDER BY COUNT(fl.user_id) DESC ");
         sql.append("LIMIT ?");
         params.add(count);
@@ -240,7 +248,7 @@ public class FilmDbStorage implements FilmStorage {
                     """
                             select * from film_director as fd
                             join films as f ON fd.film_id=f.id
-                            left join mpa_ratings on f.rating_mpa_id = mpa_ratings.id
+                            join mpa_ratings on f.rating_mpa_id = mpa_ratings.id
                             where fd.director_id= :directorId
                             order by f.release_date
                             """;
@@ -249,7 +257,7 @@ public class FilmDbStorage implements FilmStorage {
                     """
                             select * from film_director as fd
                             join films f ON fd.film_id=f.id
-                            left join mpa_ratings on f.rating_mpa_id = mpa_ratings.id
+                            join mpa_ratings on f.rating_mpa_id = mpa_ratings.id
                             where fd.director_id= :directorId
                             and f.id in (select f.id  from films as f
                             left join film_likes as l on f.id = l.film_id
@@ -265,7 +273,7 @@ public class FilmDbStorage implements FilmStorage {
                         .description(rs.getString("description"))
                         .releaseDate(rs.getDate("release_date").toLocalDate())
                         .duration(rs.getInt("duration"))
-                        .mpa(new Mpa(rs.getInt("rating_mpa_id"), rs.getString("name")))
+                        .mpa(new Mpa(rs.getInt("rating_mpa_id"), rs.getString("mpa_ratings.name")))
                         .genres(getFilmGenres(rs.getLong("id")))
                         .directors(getDirectorsByFilmId(rs.getLong("id")))
                         .build());
@@ -289,8 +297,8 @@ public class FilmDbStorage implements FilmStorage {
                     LEFT JOIN film_likes
                     ON films.id = film_likes.film_id
                 WHERE
-                    (:searchByTitle = TRUE AND films.name LIKE :textForSearch)
-                    OR (:searchByDirector = TRUE AND directors.director_name LIKE :textForSearch)
+                    (:searchByTitle = TRUE AND LOWER(films.name) LIKE :textForSearch)
+                    OR (:searchByDirector = TRUE AND LOWER(directors.director_name) LIKE :textForSearch)
                 GROUP BY
                     films.id
                 ORDER BY
@@ -298,7 +306,7 @@ public class FilmDbStorage implements FilmStorage {
                 """;
 
         MapSqlParameterSource parameters = new MapSqlParameterSource();
-        parameters.addValue("textForSearch", "%" + textForSearch + "%");
+        parameters.addValue("textForSearch", "%" + textForSearch.toLowerCase() + "%");
         parameters.addValue("searchByTitle", searchByTitle);
         parameters.addValue("searchByDirector", searchByDirector);
 
@@ -383,7 +391,7 @@ public class FilmDbStorage implements FilmStorage {
             film.setDuration(rs.getInt("duration"));
             film.setMpa(new Mpa(rs.getInt("rating_mpa_id"),
                     rs.getString("mpa_ratings.name")));
-film.setGenres(getFilmGenres(rs.getLong("id")));
+            film.setGenres(getFilmGenres(rs.getLong("id")));
             film.setDirectors(getDirectorsByFilmId(rs.getLong("id")));
             return film;
         });

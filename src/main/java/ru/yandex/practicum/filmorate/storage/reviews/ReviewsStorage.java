@@ -17,4 +17,6 @@ public interface ReviewsStorage {
     List<Reviews> findAllWithLimit(Integer count);
 
     List<Reviews> findAllByFilmIdWithLimit(Long id, Integer count);
+
+    Reviews updateUseful(Reviews reviews);
 }

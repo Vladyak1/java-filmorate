@@ -6,6 +6,8 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.util.Collections;
 import java.util.List;
@@ -17,6 +19,7 @@ import java.util.Optional;
 @Slf4j
 public class RecommendationDbStorage implements RecommendationStorage {
     private final NamedParameterJdbcTemplate jdbc;
+    private final FilmStorage filmStorage;
     private final String sqlGetRecommenderUser = "SELECT f2.user_id " +
             "FROM film_likes f1 " +
             "JOIN film_likes f2 ON f1.film_id = f2.film_id " +
@@ -25,15 +28,16 @@ public class RecommendationDbStorage implements RecommendationStorage {
             "GROUP BY f2.user_id " +
             "ORDER BY COUNT(*) DESC " +
             "LIMIT 1";
-    private final String sqlGetRecommendations = "SELECT f.id, f.name, f.description, f.release_date, f.duration " +
+    private final String sqlGetRecommendations = "SELECT * " +
             "FROM films f " +
             "JOIN film_likes fl ON f.id = fl.film_id " +
+            "JOIN mpa_ratings as mr ON f.rating_mpa_id = mr.id " +
             "WHERE fl.user_id = :similarUserId " +
             "AND f.id NOT IN (" +
             "SELECT film_id " +
             "FROM film_likes " +
             "WHERE user_id = :userId" +
-            ") ";
+            ")";
 
     @Override
     public List<Film> getRecommendations(long userId) {
@@ -49,6 +53,9 @@ public class RecommendationDbStorage implements RecommendationStorage {
                         .description(rs.getString("description"))
                         .releaseDate(rs.getDate("release_date").toLocalDate())
                         .duration(rs.getInt("duration"))
+                        .mpa(new Mpa(rs.getInt("rating_mpa_id"), rs.getString("mpa_ratings.name")))
+                        .genres(filmStorage.getFilmGenres(rs.getLong("id")))
+                        .directors(filmStorage.getDirectorsByFilmId(rs.getLong("id")))
                         .build());
     }
 

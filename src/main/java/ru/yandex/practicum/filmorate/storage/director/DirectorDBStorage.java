@@ -81,4 +81,9 @@ public class DirectorDBStorage implements DirectorStorage {
         jdbcTemplate.update(sql, params);
         return director;
     }
+
+    @Override
+    public void deleteDirectorFromFilm(long filmId) {
+        jdbcTemplate.update("delete from film_director where film_id = :filmId", Map.of("filmId", filmId));
+    }
 }
