@@ -118,6 +118,6 @@ public class ReviewsServiceImpl implements ReviewsService {
             reviewsLikeStorage.delete(reviewsId, userId);
         }
 
-        return reviewsStorage.update(reviews);
+        return reviewsStorage.updateUseful(reviews);
     }
 }

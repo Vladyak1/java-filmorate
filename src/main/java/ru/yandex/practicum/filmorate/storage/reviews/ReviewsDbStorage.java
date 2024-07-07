@@ -32,10 +32,7 @@ public class ReviewsDbStorage implements ReviewsStorage {
     private final String updateSql = """
             UPDATE reviews SET
             content = ?,
-            isPositive = ?,
-            user_id = ?,
-            film_id = ?,
-            useful = ?
+            isPositive = ?
             WHERE id = ?
             """;
     private final String deleteSqlById = """
@@ -68,7 +65,7 @@ public class ReviewsDbStorage implements ReviewsStorage {
             ps.setBoolean(2, entity.getIsPositive());
             ps.setLong(3, entity.getUserId());
             ps.setLong(4, entity.getFilmId());
-            ps.setLong(5, entity.getUseful());
+            ps.setLong(5, 0L);
             return ps;
         }, keyHolder);
 
@@ -85,15 +82,12 @@ public class ReviewsDbStorage implements ReviewsStorage {
                     updateSql,
                     entity.getContent(),
                     entity.getIsPositive(),
-                    entity.getUserId(),
-                    entity.getFilmId(),
-                    entity.getUseful(),
                     entity.getReviewId()
             );
         } catch (DataAccessException ex) {
             throw new RuntimeException("Обновление отзыва не удалось.", ex);
         }
-        return entity;
+        return findById(entity.getReviewId());
     }
 
     @Override
@@ -122,5 +116,12 @@ public class ReviewsDbStorage implements ReviewsStorage {
     @Override
     public List<Reviews> findAllByFilmIdWithLimit(Long id, Integer count) {
         return jdbcTemplate.query(selectAllByFilmIdWithLimit, rowMapper, id, count);
+    }
+
+    @Override
+    public Reviews updateUseful(Reviews reviews) {
+        jdbcTemplate.update("UPDATE reviews SET useful = ? WHERE id = ?",
+                reviews.getUseful(), reviews.getReviewId());
+        return findById(reviews.getReviewId());
     }
 }

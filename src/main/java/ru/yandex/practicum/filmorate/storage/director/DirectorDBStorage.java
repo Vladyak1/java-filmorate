@@ -42,19 +42,11 @@ public class DirectorDBStorage implements DirectorStorage {
 
     @Override
     public Director saveDirector(Director director) {
-        String sql;
-        if (director.getId() == null) {
-            sql = "insert into directors (director_name) values (:name)";
-            GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
-            jdbcTemplate.update(sql, new MapSqlParameterSource("name", director.getName()), keyHolder);
-            director.setId(Objects.requireNonNull(keyHolder.getKey()).longValue());
-        } else {
-            sql = "update directors set director_name = :name where director_id = :id";
-            MapSqlParameterSource params = new MapSqlParameterSource()
-                    .addValue("name", director.getName())
-                    .addValue("id", director.getId());
-            jdbcTemplate.update(sql, params);
-        }
+        director.setId(null);
+        String sql = "insert into directors (director_name) values (:name)";
+        GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(sql, new MapSqlParameterSource("name", director.getName()), keyHolder);
+        director.setId(Objects.requireNonNull(keyHolder.getKey()).longValue());
         return director;
     }
 
@@ -78,5 +70,20 @@ public class DirectorDBStorage implements DirectorStorage {
                 return directors.size();
             }
         });
+    }
+
+    @Override
+    public Director updateDirector(Director director) {
+        String sql = "update directors set director_name = :name where director_id = :id";
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("name", director.getName())
+                .addValue("id", director.getId());
+        jdbcTemplate.update(sql, params);
+        return director;
+    }
+
+    @Override
+    public void deleteDirectorFromFilm(long filmId) {
+        jdbcTemplate.update("delete from film_director where film_id = :filmId", Map.of("filmId", filmId));
     }
 }

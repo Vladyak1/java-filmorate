@@ -33,7 +33,7 @@ public class DirectorServiceImpl implements DirectorService {
     public Director updateDirector(Director director) {
         directorStorage.getDirectorById(director.getId())
                 .orElseThrow(() -> new NotFoundException("Director not found with id: " + director.getId()));
-        return directorStorage.saveDirector(director);
+        return directorStorage.updateDirector(director);
     }
 
     @Override
