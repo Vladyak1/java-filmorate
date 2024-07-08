@@ -30,8 +30,11 @@ public class EventDBStorage implements EventStorage {
 
     @Override
     public void addEvent(Event event) {
-        String sql = "insert into events (user_id, entity_id, event_type, operation) " +
-                "values (:userId, :entityId, :eventType, :operation)";
+        String sql = """
+                insert into events
+                (user_id, entity_id, event_type, operation)
+                values (:userId, :entityId, :eventType, :operation)
+                """;
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("userId", event.getUserId())
                 .addValue("entityId", event.getEntityId())
