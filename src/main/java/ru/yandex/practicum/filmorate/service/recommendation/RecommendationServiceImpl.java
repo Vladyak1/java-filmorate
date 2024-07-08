@@ -2,13 +2,13 @@ package ru.yandex.practicum.filmorate.service.recommendation;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.recommendation.RecommendationStorage;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -19,11 +19,7 @@ public class RecommendationServiceImpl implements RecommendationService {
     @Override
     public List<Film> getRecommendations(long userId) {
         log.info("Вызов метода getRecommendations() c userId = {}", userId);
-        try {
-            return recommendationStorage.getRecommendations(userId);
-        } catch (EmptyResultDataAccessException e) {
-            log.warn("Пользователя с id {} не существует", userId);
-            throw new NotFoundException(String.format("Пользователь с id = %s не найден ", userId));
-        }
+        return Optional.ofNullable(recommendationStorage.getRecommendations(userId))
+                .orElseThrow( () -> new NotFoundException("Пользователь с id = " + userId + " не найден "));
     }
 }
