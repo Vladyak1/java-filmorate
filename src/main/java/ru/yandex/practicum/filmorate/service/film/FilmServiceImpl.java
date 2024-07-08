@@ -177,10 +177,7 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public List<Film> getCommonFilms(long userId, long friendId) {
-        try {
-            userService.getUser(userId);
-            userService.getUser(friendId);
-        } catch (EmptyResultDataAccessException e) {
+        if (userService.getUser(friendId) == null || userService.getUser(userId) == null) {
             log.warn(USER_DOES_NOT_EXIST);
             throw new NotFoundException(USER_DOES_NOT_EXIST);
         }
