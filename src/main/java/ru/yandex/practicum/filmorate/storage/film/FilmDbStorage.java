@@ -148,49 +148,25 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getPopularFilms(long count, Integer genreId, Integer year) {
-        StringBuilder sql = new StringBuilder(
-                "SELECT f.*, mr.* FROM films f " +
-                        "JOIN mpa_ratings mr on f.rating_mpa_id = mr.id " +
-                        "LEFT JOIN film_likes fl ON f.id = fl.film_id "
-        );
+        String sql = "SELECT f.*, mr.name as mpa_name, " +
+                "(SELECT COUNT(fl.user_id) FROM film_likes fl WHERE fl.film_id = f.id) as like_count " +
+                "FROM films f " +
+                "JOIN mpa_ratings mr on f.rating_mpa_id = mr.id " +
+                "LEFT JOIN film_genres fg ON f.id = fg.film_id " +
+                "WHERE (:genreId IS NULL OR fg.genre_id = :genreId) " +
+                "AND (:year IS NULL OR YEAR(f.release_date) = :year) " +
+                "GROUP BY f.id, mr.name " +
+                "ORDER BY like_count DESC " +
+                "LIMIT :count";
 
-        List<Object> params = new ArrayList<>();
+        Map<String, Object> params = new HashMap<>();
+        params.put("genreId", genreId);
+        params.put("year", year);
+        params.put("count", count);
 
-        boolean hasGenre = genreId != null;
-        boolean hasYear = year != null;
-
-        if (hasGenre) {
-            sql.append("LEFT JOIN film_genres fg ON f.id = fg.film_id ");
-        }
-
-        if (hasGenre || hasYear) {
-            sql.append("WHERE ");
-        }
-
-        if (hasGenre) {
-            sql.append("fg.genre_id = ? ");
-            params.add(genreId);
-        }
-
-        if (hasGenre && hasYear) {
-            sql.append("AND ");
-        }
-
-        if (hasYear) {
-            sql.append("YEAR (f.release_date) = ? ");
-            params.add(year);
-        }
-
-        sql.append("GROUP BY f.id, fl.user_id ");
-        if (hasGenre) {
-            sql.append(",fg.genre_id ");
-        }
-        sql.append("ORDER BY COUNT(fl.user_id) DESC ");
-        sql.append("LIMIT ?");
-        params.add(count);
-
-        return jdbcTemplate.query(sql.toString(), filmRowMapper(), params.toArray());
+        return namedParameterJdbcTemplate.query(sql, params, filmRowMapper());
     }
+
 
     @Override
     public Film findFilm(Long id) {
