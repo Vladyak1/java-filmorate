@@ -13,7 +13,6 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -242,31 +241,21 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getDirectorFilmsSorted(long directorId, String sort) {
-        String sql;
-        switch (sort) {
-            case "year" -> sql =
-                    """
-                            select * from film_director as fd
-                            join films as f ON fd.film_id=f.id
-                            join mpa_ratings on f.rating_mpa_id = mpa_ratings.id
-                            where fd.director_id= :directorId
-                            order by f.release_date
-                            """;
+        String sql = """
+                select * from film_director as fd
+                join films as f ON fd.film_id=f.id
+                join mpa_ratings on f.rating_mpa_id = mpa_ratings.id
+                left join film_likes as l on f.id = l.film_id
+                where fd.director_id= :directorId
+                group by f.id, f.release_date
+                order by case when :sort = 'year' then f.release_date end,
+                case when :sort = 'sort' then count(l.film_id) end desc
+                """;
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("directorId", directorId)
+                .addValue("sort", sort);
 
-            case "likes" -> sql =
-                    """
-                            select * from film_director as fd
-                            join films f ON fd.film_id=f.id
-                            join mpa_ratings on f.rating_mpa_id = mpa_ratings.id
-                            where fd.director_id= :directorId
-                            and f.id in (select f.id  from films as f
-                            left join film_likes as l on f.id = l.film_id
-                            group by f.id
-                            order by count(l.film_id) desc)
-                            """;
-            default -> throw new ValidationException("Неизвестный параметр сортировки: " + sort);
-        }
-        return namedParameterJdbcTemplate.query(sql, Map.of("directorId", directorId),
+        return namedParameterJdbcTemplate.query(sql, params,
                 (rs, rowNum) -> Film.builder()
                         .id(rs.getLong("id"))
                         .name(rs.getString("name"))
@@ -277,6 +266,8 @@ public class FilmDbStorage implements FilmStorage {
                         .genres(getFilmGenres(rs.getLong("id")))
                         .directors(getDirectorsByFilmId(rs.getLong("id")))
                         .build());
+
+//
     }
 
     @Override
