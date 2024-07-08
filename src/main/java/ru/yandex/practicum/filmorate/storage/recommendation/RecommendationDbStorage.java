@@ -20,7 +20,7 @@ import java.util.Optional;
 public class RecommendationDbStorage implements RecommendationStorage {
     private final NamedParameterJdbcTemplate jdbc;
     private final FilmStorage filmStorage;
-    private final String sqlGetRecommenderUser = "SELECT f2.user_id " +
+    private final static String SQL_GET_RECOMMENDER_USER = "SELECT f2.user_id " +
             "FROM film_likes f1 " +
             "JOIN film_likes f2 ON f1.film_id = f2.film_id " +
             "AND f1.user_id != f2.user_id " +
@@ -28,7 +28,7 @@ public class RecommendationDbStorage implements RecommendationStorage {
             "GROUP BY f2.user_id " +
             "ORDER BY COUNT(*) DESC " +
             "LIMIT 1";
-    private final String sqlGetRecommendations = "SELECT * " +
+    private final static String SQL_GET_RECOMMENDATIONS = "SELECT * " +
             "FROM films f " +
             "JOIN film_likes fl ON f.id = fl.film_id " +
             "JOIN mpa_ratings as mr ON f.rating_mpa_id = mr.id " +
@@ -46,7 +46,7 @@ public class RecommendationDbStorage implements RecommendationStorage {
         if (similarUserId.isEmpty()) {
             return Collections.emptyList();
         }
-        return jdbc.query(sqlGetRecommendations, Map.of("userId", userId, "similarUserId", similarUserId.get()),
+        return jdbc.query(SQL_GET_RECOMMENDATIONS, Map.of("userId", userId, "similarUserId", similarUserId.get()),
                 (rs, rowNum) -> Film.builder()
                         .id(rs.getLong("id"))
                         .name(rs.getString("name"))
@@ -62,7 +62,7 @@ public class RecommendationDbStorage implements RecommendationStorage {
     private Optional<Long> getRecommenderUser(long userId) {
         log.info("Вызов метода getRecommenderUser() c userId = {}", userId);
         try {
-            return Optional.ofNullable(jdbc.queryForObject(sqlGetRecommenderUser,
+            return Optional.ofNullable(jdbc.queryForObject(SQL_GET_RECOMMENDER_USER,
                     Map.of("userId", userId), Long.class));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
