@@ -36,8 +36,10 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film addFilm(Film film) {
-        final String sql = "insert into films (name, release_date, description, duration, rating_mpa_id) " +
-                "values (?, ?, ?, ?, ?)";
+        final String sql = """
+                INSERT INTO films (name, release_date, description, duration, rating_mpa_id)
+                VALUES (?, ?, ?, ?, ?)
+                """;
 
         KeyHolder gkh = new GeneratedKeyHolder();
 
@@ -102,8 +104,11 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film updFilm(Film film) {
-        final String sql = "update films set name = ?, release_date = ?, description = ?, duration = ?," +
-                "rating_mpa_id = ? where id = ?";
+        final String sql = """
+                UPDATE films
+                SET name = ?, release_date = ?, description = ?, duration = ?, rating_mpa_id = ?
+                WHERE id = ?
+                """;
         jdbcTemplate.update(sql, film.getName(), film.getReleaseDate(), film.getDescription(),
                 film.getDuration(), film.getMpa().getId(), film.getId());
 
@@ -129,20 +134,30 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getFilms() {
-        final String sql = "select f.*, mr.name mpa_name from films f join mpa_ratings mr on f.rating_mpa_id = mr.id " +
-                "order by f.id";
+        final String sql = """
+                SELECT f.*, mr.name mpa_name
+                FROM films f
+                JOIN mpa_ratings mr on f.rating_mpa_id = mr.id
+                ORDER BY f.id
+                """;
         return jdbcTemplate.query(sql, filmRowMapper());
     }
 
     @Override
     public void addLike(long filmId, long userId) {
-        final String sql = "merge into film_likes (user_id, film_id) values (?, ?)";
+        final String sql = """
+                MERGE INTO film_likes (user_id, film_id)
+                VALUES (?, ?)
+                """;
         jdbcTemplate.update(sql, userId, filmId);
     }
 
     @Override
     public void delLike(long filmId, long userId) {
-        final String sql = "delete from film_likes where user_id = ? and film_id = ?";
+        final String sql = """
+                DELETE FROM film_likes
+                WHERE user_id = ? and film_id = ?
+                """;
         jdbcTemplate.update(sql, userId, filmId);
     }
 
@@ -171,8 +186,12 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public Film findFilm(Long id) {
         Film result;
-        final String sql = "select f.*, mr.name mpa_name from films f join mpa_ratings mr on f.rating_mpa_id = mr.id " +
-                "where f.id = ?";
+        final String sql = """
+                SELECT f.*, mr.name mpa_name
+                FROM films f
+                JOIN mpa_ratings mr on f.rating_mpa_id = mr.id
+                WHERE f.id = ?
+                """;
         try {
             result = jdbcTemplate.queryForObject(sql, filmRowMapper(), id);
         } catch (EmptyResultDataAccessException e) {
@@ -185,47 +204,64 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public void addFilmGenre(Long filmId, Integer genreId) {
-        final String sql = "insert into film_genres (film_id, genre_id) values (?, ?)";
+        final String sql = """
+                INSERT INTO film_genres (film_id, genre_id)
+                VALUES (?, ?)
+                """;
         jdbcTemplate.update(sql, filmId, genreId);
     }
 
     @Override
     public List<Genre> getFilmGenres(Long filmId) {
-        final String sql = "select distinct g.id as id, g.name from film_genres fg left join genres g on " +
-                "fg.genre_id = g.id where film_id = ?";
+        final String sql = """
+                SELECT distinct g.id as id, g.name
+                FROM film_genres fg
+                LEFT JOIN genres g on fg.genre_id = g.id
+                WHERE film_id = ?
+                """;
         return jdbcTemplate.query(sql, genreRowMapper(), filmId);
     }
 
     @Override
     public void delFilmGenres(Long filmId) {
-        final String sql = "delete from film_genres where film_id = ?";
+        final String sql = """
+                DELETE FROM film_genres
+                WHERE film_id = ?
+                """;
         jdbcTemplate.update(sql, filmId);
     }
 
     @Override
     public Mpa getFilmMpa(Long filmId) {
-        final String sql = "select mr.id, mr.name from films f " +
-                "left join mpa_ratings mr on f.rating_mpa_id = mr.id where f.id = ?";
+        final String sql = """
+                SELECT mr.id, mr.name from films f
+                LEFT JOIN mpa_ratings mr on f.rating_mpa_id = mr.id
+                WHERE f.id = ?
+                """;
         return jdbcTemplate.queryForObject(sql, mpaRowMapper(), filmId);
     }
 
     @Override
     public void delFilmMpa(Long filmId) {
-        final String sql = "update films set rating_mpa_id = null where id = ?";
+        final String sql = """
+                UPDATE films
+                SET rating_mpa_id = null
+                WHERE id = ?
+                """;
         jdbcTemplate.update(sql, filmId);
     }
 
     @Override
     public List<Film> getDirectorFilmsSorted(long directorId, String sort) {
         String sql = """
-                select * from film_director as fd
-                join films as f ON fd.film_id=f.id
-                join mpa_ratings on f.rating_mpa_id = mpa_ratings.id
-                left join film_likes as l on f.id = l.film_id
-                where fd.director_id= :directorId
-                group by f.id, f.release_date
-                order by case when :sort = 'year' then f.release_date end,
-                case when :sort = 'sort' then count(l.film_id) end desc
+                SELECT * from film_director as fd
+                JOIN films as f ON fd.film_id=f.id
+                JOIN mpa_ratings on f.rating_mpa_id = mpa_ratings.id
+                LEFT JOIN film_likes as l on f.id = l.film_id
+                WHERE fd.director_id= :directorId
+                GROUP BY f.id, f.release_date
+                ORDER BY case when :sort = 'year' then f.release_date end,
+                CASE WHEN :sort = 'sort' then count(l.film_id) end desc
                 """;
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("directorId", directorId)
