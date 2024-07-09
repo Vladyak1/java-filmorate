@@ -13,6 +13,7 @@ import ru.yandex.practicum.filmorate.storage.reviews.ReviewsStorage;
 import ru.yandex.practicum.filmorate.storage.reviews.like.ReviewsLikeDbStorage;
 
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -26,10 +27,8 @@ public class ReviewsServiceImpl implements ReviewsService {
 
     @Override
     public Reviews createReview(Reviews reviews) {
-        if (reviews.getFilmId() < 0) {
-            throw new NotFoundException("Поле: filmId не может быть отрицательным");
-        } else if (reviews.getUserId() < 0) {
-            throw new NotFoundException("Поле: userId не может быть отрицательным");
+        if (reviews.getFilmId() < 0 || reviews.getUserId() < 0) {
+            throw new NotFoundException("Id не может быть отрицательным");
         }
         Reviews newReview = reviewsStorage.save(reviews);
         eventStorage.addEvent(Event.builder()
@@ -70,12 +69,10 @@ public class ReviewsServiceImpl implements ReviewsService {
     }
 
     @Override
-    public List<Reviews> getReviewsByFilmId(Long id, Integer count) {
-        if (id == null) {
-            return reviewsStorage.findAllWithLimit(count);
-        } else {
-            return reviewsStorage.findAllByFilmIdWithLimit(id, count);
-        }
+    public List<Reviews> getAllReviews(Long id, Integer count) {
+        return Optional.ofNullable(id)
+                .map(idValue -> reviewsStorage.findAllByFilmIdWithLimit(idValue, count))
+                .orElseGet(() -> reviewsStorage.findAllWithLimit(count));
     }
 
     @Override
