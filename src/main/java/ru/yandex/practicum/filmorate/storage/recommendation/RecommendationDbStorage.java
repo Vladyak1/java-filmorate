@@ -20,24 +20,27 @@ import java.util.Optional;
 public class RecommendationDbStorage implements RecommendationStorage {
     private final NamedParameterJdbcTemplate jdbc;
     private final FilmStorage filmStorage;
-    private final static String SQL_GET_RECOMMENDER_USER = "SELECT f2.user_id " +
-            "FROM film_likes f1 " +
-            "JOIN film_likes f2 ON f1.film_id = f2.film_id " +
-            "AND f1.user_id != f2.user_id " +
-            "WHERE f1.user_id = :userId " +
-            "GROUP BY f2.user_id " +
-            "ORDER BY COUNT(*) DESC " +
-            "LIMIT 1";
-    private final static String SQL_GET_RECOMMENDATIONS = "SELECT * " +
-            "FROM films f " +
-            "JOIN film_likes fl ON f.id = fl.film_id " +
-            "JOIN mpa_ratings as mr ON f.rating_mpa_id = mr.id " +
-            "WHERE fl.user_id = :similarUserId " +
-            "AND f.id NOT IN (" +
-            "SELECT film_id " +
-            "FROM film_likes " +
-            "WHERE user_id = :userId" +
-            ")";
+    private static final String SQL_GET_RECOMMENDER_USER = """
+            SELECT f2.user_id
+            FROM film_likes f1
+            JOIN film_likes f2 ON f1.film_id = f2.film_id AND f1.user_id != f2.user_id
+            WHERE f1.user_id = :userId
+            GROUP BY f2.user_id
+            ORDER BY COUNT(*) DESC
+            LIMIT 1
+            """;
+    private static final String SQL_GET_RECOMMENDATIONS = """
+            SELECT *
+            FROM films f
+            JOIN film_likes fl ON f.id = fl.film_id
+            JOIN mpa_ratings as mr ON f.rating_mpa_id = mr.id
+            WHERE fl.user_id = :similarUserId
+            AND f.id NOT IN (
+                SELECT film_id
+                FROM film_likes
+                WHERE user_id = :userId
+                )
+            """;
 
     @Override
     public List<Film> getRecommendations(long userId) {
