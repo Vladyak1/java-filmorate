@@ -175,7 +175,6 @@ public class FilmDbStorage implements FilmStorage {
                 "LIMIT :count";
 
         Map<String, Object> params = new HashMap<>();
-        
         params.put("genreId", genreId);
         params.put("year", year);
         params.put("count", count);
