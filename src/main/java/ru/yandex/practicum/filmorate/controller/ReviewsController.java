@@ -41,10 +41,10 @@ public class ReviewsController {
     }
 
     @GetMapping
-    public List<Reviews> getReviewsByFilmId(@RequestParam(value = "filmId", required = false) Long filmId,
+    public List<Reviews> getAllReviews(@RequestParam(value = "filmId", required = false) Long filmId,
                                             @RequestParam(value = "count", defaultValue = "10") Integer count) {
         log.info("Получен запрос на получение отзыва по фильма id {} ", filmId);
-        return reviewsService.getReviewsByFilmId(filmId, count);
+        return reviewsService.getAllReviews(filmId, count);
     }
 
     @PutMapping("/{id}/like/{userId}")
