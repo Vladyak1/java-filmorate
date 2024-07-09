@@ -43,7 +43,7 @@ public class ReviewsController {
     @GetMapping
     public List<Reviews> getAllReviews(@RequestParam(value = "filmId", required = false) Long filmId,
                                             @RequestParam(value = "count", defaultValue = "10") Integer count) {
-        log.info("Получен запрос на получение отзыва по фильма id {} ", filmId);
+        log.info("Получен запрос на получение всех отзывов, параметры отбора: filmId {}, count {}", filmId, count);
         return reviewsService.getAllReviews(filmId, count);
     }
 
