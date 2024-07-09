@@ -20,6 +20,6 @@ public class RecommendationServiceImpl implements RecommendationService {
     public List<Film> getRecommendations(long userId) {
         log.info("Вызов метода getRecommendations() c userId = {}", userId);
         return Optional.ofNullable(recommendationStorage.getRecommendations(userId))
-                .orElseThrow( () -> new NotFoundException("Пользователь с id = " + userId + " не найден "));
+                .orElseThrow(() -> new NotFoundException("Пользователь с id = " + userId + " не найден "));
     }
 }
