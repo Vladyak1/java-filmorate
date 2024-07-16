@@ -8,10 +8,17 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
+import ru.yandex.practicum.filmorate.model.enums.Operation;
 import ru.yandex.practicum.filmorate.service.user.UserService;
+import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
+import ru.yandex.practicum.filmorate.storage.event.EventStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @Slf4j
@@ -20,6 +27,8 @@ import java.util.List;
 public class FilmServiceImpl implements FilmService {
     private final FilmStorage filmDbStorage;
     private final UserService userService;
+    private final DirectorStorage directorStorage;
+    private final EventStorage eventStorage;
     private static final String FILM_DOES_NOT_EXIST = "Такого фильма не существует";
     private static final String USER_DOES_NOT_EXIST = "Пользователь не найден";
     private static final String MPA_DOES_NOT_EXIST = "Рейтинг MPA не найден";
@@ -100,6 +109,12 @@ public class FilmServiceImpl implements FilmService {
         }
         log.info("Фильму с id: {} поставили лайк", filmId);
         filmDbStorage.addLike(filmId, userId);
+        eventStorage.addEvent(Event.builder()
+                .userId(userId)
+                .entityId(filmId)
+                .eventType(EventType.LIKE)
+                .operation(Operation.ADD)
+                .build());
     }
 
     @Override
@@ -118,20 +133,59 @@ public class FilmServiceImpl implements FilmService {
         }
         log.info("У фильма с id: {} убрали лайк", filmId);
         filmDbStorage.delLike(filmId, userId);
-    }
-
-    @Override
-    public List<Film> getPopularFilms(long count) {
-        if (count <= 0) {
-            throw new IllegalArgumentException("Запрошено отрицательное число");
-        }
-        log.info("Список {} популярных фильма(ов)", count);
-        return filmDbStorage.getPopularFilms(count);
+        eventStorage.addEvent(Event.builder()
+                .userId(userId)
+                .entityId(filmId)
+                .eventType(EventType.LIKE)
+                .operation(Operation.REMOVE)
+                .build());
     }
 
     @Override
     public Film getFilm(long id) {
         log.info("Получен фильм с id: {}", id);
         return filmDbStorage.findFilm(id);
+    }
+
+    @Override
+    public List<Film> getDirectorFilmsSorted(long directorId, String sort) {
+        log.info("Сортируем фильмы по {} для директора {}", sort, directorId);
+        directorStorage.getDirectorById(directorId)
+                .orElseThrow(() -> new NotFoundException("Режиссер не найден с ID " + directorId));
+        return filmDbStorage.getDirectorFilmsSorted(directorId, sort);
+    }
+
+    @Override
+    public List<Film> getPopularFilms(long count, Integer genreId, Integer year) {
+        if (count <= 0) {
+            throw new IllegalArgumentException("Запрошено отрицательное число");
+        }
+        log.info("Список {} популярных фильма(ов)", count);
+        return filmDbStorage.getPopularFilms(count, genreId, year);
+    }
+
+    @Override
+    public List<Film> getFilmListBySearch(String textForSearch, String filterCriteria) {
+        log.info("Поиск фильмов по части строки {} для {}", textForSearch, filterCriteria);
+        var filterCriteriaDelimiter = ",";
+        var criterionList = Arrays.asList(filterCriteria.split(filterCriteriaDelimiter));
+        var searchByDirector = criterionList.contains("director");
+        var searchByTitle = criterionList.contains("title");
+
+        return filmDbStorage.getFilmListBySearch(textForSearch, searchByDirector, searchByTitle);
+    }
+
+    @Override
+    public List<Film> getCommonFilms(long userId, long friendId) {
+        if (userService.getUser(friendId) == null || userService.getUser(userId) == null) {
+            log.warn(USER_DOES_NOT_EXIST);
+            throw new NotFoundException(USER_DOES_NOT_EXIST);
+        }
+        log.info("Ищем общие фильмы User`a {} c Friend`ом {}", userId, friendId);
+        try {
+            return filmDbStorage.getCommonFilms(userId, friendId);
+        } catch (EmptyResultDataAccessException e) {
+            return Collections.emptyList();
+        }
     }
 }
